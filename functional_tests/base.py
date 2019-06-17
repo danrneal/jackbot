@@ -1,6 +1,7 @@
 from unittest import TestCase
 from jira import jira
 
+
 class FunctionalTest(TestCase):
 
     def setUp(self):

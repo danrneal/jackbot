@@ -17,6 +17,7 @@ headers = {
     "Authorization": f"Basic {api_token}"
 }
 
+
 def api_call(method, endpoint, data=None):
     url = f"{SERVER}{endpoint}"
     if data:
@@ -27,6 +28,7 @@ def api_call(method, endpoint, data=None):
         response.raise_for_status()
     return response.text
 
+
 def create_sprint(name, board_id):
     url = '/rest/agile/1.0/sprint'
     payload = {
@@ -35,6 +37,12 @@ def create_sprint(name, board_id):
     }
     sprint = api_call("POST", url, data=payload)
     return json.loads(sprint)
+
+
+def delete_sprint(sprint_id):
+    url = f"/rest/agile/1.0/sprint/{sprint_id}"
+    api_call("DELETE", url)
+
 
 def create_issue(project_key, issuetype, summary, parent_key=None, **kwargs):
     url = "/rest/api/3/issue"
@@ -55,3 +63,8 @@ def create_issue(project_key, issuetype, summary, parent_key=None, **kwargs):
         }
     issue = api_call("POST", url, data=payload)
     return json.loads(issue)
+
+
+def delete_issue(issue_key, delete_subtasks=False):
+    url = f"/rest/api/3/issue/{issue_key}?deleteSubtasks={delete_subtasks}"
+    api_call("DELETE", url)
