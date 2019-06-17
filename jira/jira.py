@@ -1,14 +1,14 @@
-from base64 import b64encode
+import base64
 import json
 import os
-from requests import request
+import requests
 
 SERVER = 'https://moblab.atlassian.net'
 EMAIL = 'dan.neal@moblab.com'
 PROJ_KEY = "EDU"
 BOARD_ID = 17
 
-api_token = b64encode(
+api_token = base64.b64encode(
     bytes(f"{EMAIL}:{os.environ['JIRA_API_TOKEN']}", 'utf-8')
 ).decode('utf-8')
 headers = {
@@ -22,7 +22,7 @@ def api_call(method, endpoint, data=None):
     url = f"{SERVER}{endpoint}"
     if data:
         data = json.dumps(data)
-    response = request(method, url, data=data, headers=headers)
+    response = requests.request(method, url, data=data, headers=headers)
     if not response.ok:
         print(response.text)
         response.raise_for_status()
