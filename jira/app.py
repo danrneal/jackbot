@@ -1,4 +1,6 @@
 import flask
+import json
+from jira.issues import issue_event
 
 app = flask.Flask(__name__)
 
@@ -6,6 +8,9 @@ app = flask.Flask(__name__)
 @app.route('/', methods=['POST', 'GET'])
 def webhook():
     if flask.request.method == 'POST':
+        data = json.loads(flask.request.data.decode())
+        if str(data.get("webhookEvent")).startswith("jira:issue_"):
+            issue_event(data)
         return 'OK'
     return 'JackBot is running!'
 
