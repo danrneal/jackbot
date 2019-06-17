@@ -18,7 +18,7 @@ class WebhookTest(unittest.TestCase):
 
     @patch('jira.app.issue_event')
     def test_issue_event_gets_passed_to_issue_event_function(
-            self, mock_issue_event
+        self, mock_issue_event
     ):
         app.post('/', data=json.dumps({"webhookEvent": "jira:issue_anything"}))
         mock_issue_event.assert_called_once_with({
