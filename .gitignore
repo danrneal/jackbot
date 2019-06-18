@@ -2,3 +2,4 @@ env
 .idea
 __pycache__
 functional_tests/datadumps
+.env
