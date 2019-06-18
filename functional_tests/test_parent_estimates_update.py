@@ -45,7 +45,7 @@ class EstimateUpdatedTest(FunctionalTest):
         # Abe creates a subtask with an estimate, the parent issue updates
         estimate_field = jira.get_estimate_field(self.issue_keys[0])
         jira.create_issue(
-            jira.PROJ_KEY, "Story Task", "test0c", self.issue_keys[0],
+            "Story Task", "test0c", self.issue_keys[0],
             **{estimate_field: 2}
         )
         self.wait_for(lambda: self.assertEqual(
@@ -55,13 +55,13 @@ class EstimateUpdatedTest(FunctionalTest):
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)
 
         # Abe deletes a subtask, the parent issue updates
-        parent = jira.get_issue(self.issue_keys[1])
+        parent = jira.get_issue(self.issue_keys[0])
         subtasks = parent['fields']['subtasks']
-        jira.delete_issue(subtasks[0]['key'])
+        jira.delete_issue(subtasks[2]['key'])
         self.wait_for(lambda: self.assertEqual(
-            jira.get_estimate(self.issue_keys[1]), 3
+            jira.get_estimate(self.issue_keys[0]), 11
         ))
-        self.assertEqual(jira.get_estimate(self.issue_keys[0]), 13)
+        self.assertEqual(jira.get_estimate(self.issue_keys[1]), 8)
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)
 
         # Abe removes an issue from the sprint, the parent's issue resets its
@@ -70,5 +70,5 @@ class EstimateUpdatedTest(FunctionalTest):
         self.wait_for(lambda: self.assertEqual(
             jira.get_estimate(self.issue_keys[0]), None
         ))
-        self.assertEqual(jira.get_estimate(self.issue_keys[1]), 3)
+        self.assertEqual(jira.get_estimate(self.issue_keys[1]), 8)
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)

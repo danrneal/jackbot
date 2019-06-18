@@ -72,12 +72,25 @@ def get_issue(issue_key):
     return json.loads(issue)
 
 
-def create_issue(project_key, issuetype, summary, parent_key=None, **kwargs):
+def search_for_issue(issuetype, summary, parent_key=None):
+    jql = f'project={PROJ_KEY}%26issuetype="{issuetype}"%26summary~"{summary}"'
+    if parent_key:
+        jql += f"%26parent={parent_key}"
+    url = f"/rest/api/3/search?jql={jql}"
+    response = api_call("GET", url)
+    issues = json.loads(response)['issues']
+    if len(issues) == 0:
+        return None
+    else:
+        return issues[0]
+
+
+def create_issue(issuetype, summary, parent_key=None, **kwargs):
     url = "/rest/api/3/issue"
     payload = {
         "fields": {**{
             "project": {
-                "key": project_key
+                "key": PROJ_KEY
             },
             "issuetype": {
                 "name": issuetype
@@ -96,6 +109,36 @@ def create_issue(project_key, issuetype, summary, parent_key=None, **kwargs):
 def delete_issue(issue_key, delete_subtasks=False):
     url = f"/rest/api/3/issue/{issue_key}?deleteSubtasks={delete_subtasks}"
     api_call("DELETE", url)
+
+
+def get_transition_id(issue_key, transition_name):
+    url = f"/rest/api/3/issue/{issue_key}/transitions"
+    response = api_call("GET", url)
+    transitions = json.loads(response)['transitions']
+    transition_id = next(
+        transition['id']
+        for transition
+        in transitions
+        if transition["name"] == transition_name
+    )
+    return transition_id
+
+
+def transition_issue(issue_key, transition_name, resolution=None):
+    transition_id = get_transition_id(issue_key, transition_name)
+    url = f"/rest/api/3/issue/{issue_key}/transitions"
+    payload = {
+        "transition": {
+            "id": transition_id
+        }
+    }
+    if resolution:
+        payload['fields'] = {
+            "resolution": {
+                "name": resolution
+            }
+        }
+    api_call("POST", url, data=payload)
 
 
 def get_estimate(issue_key):

@@ -28,27 +28,37 @@ class FunctionalTest(unittest.TestCase):
         sprint = jira.create_sprint("TEST Sprint", jira.BOARD_ID)
         self.sprint_id = sprint['id']
         self.issue_keys = []
+        self.subtask_keys = []
         for i in range(3):
-            issue = jira.create_issue(jira.PROJ_KEY, "Story", f"test_{i}")
+            issue = self.setup_issue("Story", f"test_{i}")
             self.issue_keys.append(issue['key'])
-            jira.create_issue(
-                jira.PROJ_KEY, "Story Task", f"test_{i}a", issue['key']
-            )
-            jira.create_issue(
-                jira.PROJ_KEY, "Story Task", f"test_{i}b", issue['key']
-            )
+            for c in ['a', 'b']:
+                subtask = self.setup_issue(
+                    "Story Task", f"test_{i}{c}", issue['key']
+                )
+                self.subtask_keys.append(subtask['key'])
         self.wait_for(lambda: self.assertEqual(
             requests.request("GET", self.live_server_url).text,
             "JackBot is running!"
         ))
 
     def tearDown(self):
-        for issue_key in self.issue_keys:
-            jira.delete_issue(issue_key, delete_subtasks=True)
+        for issue_key in self.issue_keys + self.subtask_keys:
+            jira.transition_issue(issue_key, "Archive", "Won't Do")
         jira.delete_sprint(self.sprint_id)
         if not STAGING_SERVER:
             requests.request("POST", self.live_server_url + '/shutdown')
             self.serveo.kill()
+
+    @staticmethod
+    def setup_issue(issuetype, summary, parent_key=None):
+        issue = jira.search_for_issue(issuetype, summary, parent_key)
+        if issue:
+            jira.transition_issue(issue['key'], "Backlog")
+            jira.update_estimate(issue['key'], None)
+        else:
+            issue = jira.create_issue(issuetype, summary, parent_key)
+        return issue
 
     @staticmethod
     def wait_for(fn):
