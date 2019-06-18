@@ -13,11 +13,11 @@ MAX_WAIT = 20
 class FunctionalTest(unittest.TestCase):
 
     def setUp(self):
-        threading.Thread(target=app.run).start()
         staging_server = os.environ.get('STAGING_SERVER')
         if staging_server:
             self.live_server_url = 'https://' + staging_server
         else:
+            threading.Thread(target=app.run).start()
             self.live_server_url = 'https://jackbot.serveo.net'
             self.serveo = subprocess.Popen(
                 ['ssh', '-R', 'jackbot:80:localhost:5000', 'serveo.net'],
@@ -46,7 +46,8 @@ class FunctionalTest(unittest.TestCase):
         jira.delete_sprint(self.sprint_id)
         if self.serveo:
             self.serveo.kill()
-        requests.request("POST", 'http://127.0.0.1:5000/shutdown')
+            requests.request("POST", self.live_server_url + '/shutdown')
+
 
     @staticmethod
     def wait_for(fn):
