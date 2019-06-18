@@ -7,7 +7,7 @@ User=USER
 WorkingDirectory=/home/USER/sites/DOMAIN
 EnvironmentFile=/home/USER/sites/DOMAIN/.env
 
-ExecStart=/home/USER/sites/DOMAIN/env/bin/gunicorn --bind unix:/tmp/DOMAIN.socket jackbot.app:app
+ExecStart=/home/USER/sites/DOMAIN/env/bin/gunicorn --bind unix:/tmp/DOMAIN.socket jira.app:app
 
 [Install]
 WantedBy=multi-user.target
