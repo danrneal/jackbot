@@ -1,9 +1,12 @@
 import requests
 import subprocess
+import time
 import threading
 import unittest
 from jira import jira
 from jira.app import app
+
+MAX_WAIT = 20
 
 
 class FunctionalTest(unittest.TestCase):
@@ -26,6 +29,10 @@ class FunctionalTest(unittest.TestCase):
             jira.create_issue(
                 jira.PROJ_KEY, "Story Task", f"test_{i}b", issue['key']
             )
+        self.wait_for(lambda: self.assertEqual(
+            requests.request("GET", 'https://jackbot.serveo.net').text,
+            "JackBot is running!"
+        ))
 
     def tearDown(self):
         for issue_key in self.issue_keys:
@@ -33,3 +40,14 @@ class FunctionalTest(unittest.TestCase):
         jira.delete_sprint(self.sprint_id)
         self.serveo.kill()
         requests.request("POST", 'http://127.0.0.1:5000/shutdown')
+
+    @staticmethod
+    def wait_for(fn):
+        start_time = time.time()
+        while True:
+            try:
+                return fn()
+            except AssertionError as e:
+                if time.time() - start_time > MAX_WAIT:
+                    raise e
+                time.sleep(0.5)

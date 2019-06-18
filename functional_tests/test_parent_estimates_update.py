@@ -22,8 +22,12 @@ class EstimateUpdatedTest(FunctionalTest):
         # Abe adds a couple of issues to the sprint, the parent issue
         # estimate updates to reflect the sum of the subtasks
         jira.add_issues_to_sprint(self.sprint_id, self.issue_keys[:2])
-        self.assertEqual(jira.get_estimate(self.issue_keys[0]), 11)
-        self.assertEqual(jira.get_estimate(self.issue_keys[1]), 0)
+        self.wait_for(lambda: self.assertEqual(
+            jira.get_estimate(self.issue_keys[0]), 11
+        ))
+        self.wait_for(lambda: self.assertEqual(
+            jira.get_estimate(self.issue_keys[1]), 0
+        ))
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)
 
         # Abe adds hours to some subtasks in the sprint, the parent issue
@@ -32,7 +36,9 @@ class EstimateUpdatedTest(FunctionalTest):
         subtasks = parent['fields']['subtasks']
         jira.update_estimate(subtasks[0]['key'], 5)
         jira.update_estimate(subtasks[1]['key'], 3)
-        self.assertEqual(jira.get_estimate(self.issue_keys[1]), 8)
+        self.wait_for(lambda: self.assertEqual(
+            jira.get_estimate(self.issue_keys[1]), 8
+        ))
         self.assertEqual(jira.get_estimate(self.issue_keys[0]), 11)
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)
 
@@ -42,7 +48,9 @@ class EstimateUpdatedTest(FunctionalTest):
             jira.PROJ_KEY, "Story Task", "test0c", self.issue_keys[0],
             **{estimate_field: 2}
         )
-        self.assertEqual(jira.get_estimate(self.issue_keys[0]), 13)
+        self.wait_for(lambda: self.assertEqual(
+            jira.get_estimate(self.issue_keys[0]), 13
+        ))
         self.assertEqual(jira.get_estimate(self.issue_keys[1]), 8)
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)
 
@@ -50,13 +58,17 @@ class EstimateUpdatedTest(FunctionalTest):
         parent = jira.get_issue(self.issue_keys[1])
         subtasks = parent['fields']['subtasks']
         jira.delete_issue(subtasks[0]['key'])
-        self.assertEqual(jira.get_estimate(self.issue_keys[1]), 3)
+        self.wait_for(lambda: self.assertEqual(
+            jira.get_estimate(self.issue_keys[1]), 3
+        ))
         self.assertEqual(jira.get_estimate(self.issue_keys[0]), 13)
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)
 
         # Abe removes an issue from the sprint, the parent's issue resets its
         # estimate to None
         jira.remove_issues_from_sprint([self.issue_keys[0]])
-        self.assertEqual(jira.get_estimate(self.issue_keys[0]), None)
+        self.wait_for(lambda: self.assertEqual(
+            jira.get_estimate(self.issue_keys[0]), None
+        ))
         self.assertEqual(jira.get_estimate(self.issue_keys[1]), 3)
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)
