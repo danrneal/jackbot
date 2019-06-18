@@ -5,24 +5,26 @@ import time
 import threading
 import unittest
 from jira import jira
-from jira.app import app
 
+STAGING_SERVER = os.environ.get('STAGING_SERVER')
 MAX_WAIT = 20
+
+if not STAGING_SERVER:
+    from jira.app import app
 
 
 class FunctionalTest(unittest.TestCase):
 
     def setUp(self):
-        staging_server = os.environ.get('STAGING_SERVER')
-        if staging_server:
-            self.live_server_url = 'https://' + staging_server
+        if STAGING_SERVER:
+            self.live_server_url = 'https://' + STAGING_SERVER
         else:
-            threading.Thread(target=app.run).start()
             self.live_server_url = 'https://jackbot.serveo.net'
             self.serveo = subprocess.Popen(
                 ['ssh', '-R', 'jackbot:80:localhost:5000', 'serveo.net'],
                 stdin=subprocess.DEVNULL
             )
+            threading.Thread(target=app.run).start()
         sprint = jira.create_sprint("TEST Sprint", jira.BOARD_ID)
         self.sprint_id = sprint['id']
         self.issue_keys = []
@@ -44,10 +46,9 @@ class FunctionalTest(unittest.TestCase):
         for issue_key in self.issue_keys:
             jira.delete_issue(issue_key, delete_subtasks=True)
         jira.delete_sprint(self.sprint_id)
-        if self.serveo:
-            self.serveo.kill()
+        if not STAGING_SERVER:
             requests.request("POST", self.live_server_url + '/shutdown')
-
+            self.serveo.kill()
 
     @staticmethod
     def wait_for(fn):
