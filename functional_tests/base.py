@@ -1,3 +1,4 @@
+import os
 import requests
 import subprocess
 import time
@@ -13,10 +14,15 @@ class FunctionalTest(unittest.TestCase):
 
     def setUp(self):
         threading.Thread(target=app.run).start()
-        self.serveo = subprocess.Popen(
-            ['ssh', '-R', 'jackbot:80:localhost:5000', 'serveo.net'],
-            stdin=subprocess.DEVNULL
-        )
+        staging_server = os.environ.get('STAGING_SERVER')
+        if staging_server:
+            self.live_server_url = 'https://' + staging_server
+        else:
+            self.live_server_url = 'https://jackbot.serveo.net'
+            self.serveo = subprocess.Popen(
+                ['ssh', '-R', 'jackbot:80:localhost:5000', 'serveo.net'],
+                stdin=subprocess.DEVNULL
+            )
         sprint = jira.create_sprint("TEST Sprint", jira.BOARD_ID)
         self.sprint_id = sprint['id']
         self.issue_keys = []
@@ -30,7 +36,7 @@ class FunctionalTest(unittest.TestCase):
                 jira.PROJ_KEY, "Story Task", f"test_{i}b", issue['key']
             )
         self.wait_for(lambda: self.assertEqual(
-            requests.request("GET", 'https://jackbot.serveo.net').text,
+            requests.request("GET", self.live_server_url).text,
             "JackBot is running!"
         ))
 
@@ -38,7 +44,8 @@ class FunctionalTest(unittest.TestCase):
         for issue_key in self.issue_keys:
             jira.delete_issue(issue_key, delete_subtasks=True)
         jira.delete_sprint(self.sprint_id)
-        self.serveo.kill()
+        if self.serveo:
+            self.serveo.kill()
         requests.request("POST", 'http://127.0.0.1:5000/shutdown')
 
     @staticmethod
