@@ -8,6 +8,9 @@ app = app.test_client()
 
 class WebhookTest(unittest.TestCase):
 
+    def tearDown(self):
+        app.post('/shutdown')
+
     def test_home_page_returns_correct_html(self):
         response = app.get('/')
         self.assertEqual('JackBot is running!', response.data.decode())
@@ -16,16 +19,12 @@ class WebhookTest(unittest.TestCase):
         response = app.post('/', data=json.dumps({"key": 'value'}))
         self.assertEqual(200, response.status_code)
 
-    @patch('jira.app.issue_event')
-    def test_issue_event_gets_passed_to_issue_event_function(
-        self, mock_issue_event
-    ):
-        app.post('/', data=json.dumps({"webhookEvent": "jira:issue_anything"}))
-        mock_issue_event.assert_called_once_with({
-            "webhookEvent": "jira:issue_anything"}
-        )
+    @patch('jira.app.q.put')
+    def test_issue_event_gets_put_in_q(self, mock_q_put, ):
+        app.post('/', data=json.dumps({"webhookEvent": "jira:issue_any"}))
+        mock_q_put.assert_called_once_with({"webhookEvent": "jira:issue_any"})
 
-    @patch('jira.app.issue_event')
-    def test_other_events_get_discared(self, mock_issue_event):
+    @patch('jira.app.q.put')
+    def test_other_events_get_discared(self, mock_q_put, ):
         app.post('/', data=json.dumps({"webhookEvent": "jira:other_event"}))
-        mock_issue_event.assert_not_called()
+        mock_q_put.assert_not_called()

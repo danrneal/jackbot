@@ -1,8 +1,10 @@
 import flask
 import json
-from jira.issues import issue_event
+import threading
+from jira.issues import issue_event, q
 
 app = flask.Flask(__name__)
+threading.Thread(target=issue_event).start()
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -10,15 +12,16 @@ def webhook():
     if flask.request.method == 'POST':
         data = json.loads(flask.request.data.decode())
         if str(data.get("webhookEvent")).startswith("jira:issue_"):
-            issue_event(data)
+            q.put(data)
         return 'OK'
     return 'JackBot is running!'
 
 
 def shutdown_server():
+    q.put(None)
     func = flask.request.environ.get('werkzeug.server.shutdown')
     if func is None:
-        raise RuntimeError('Not running with the Werkzeug Server')
+        return
     func()
 
 

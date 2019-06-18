@@ -116,3 +116,15 @@ def update_estimate(issue_key, estimate):
         'value': estimate
     }
     api_call("PUT", url, data=payload)
+
+
+def generate_file(data, filename=None):
+    if not os.path.exists('functional_tests/datadumps'):
+        os.makedirs('functional_tests/datadumps')
+    i = 1
+    while os.path.exists(f'functional_tests/datadumps/webhook-{i:02d}.json'):
+        i += 1
+    if not filename:
+        filename = f'functional_tests/datadumps/webhook-{i:02d}.json'
+    with open(filename, 'w') as outfile:
+        outfile.write(json.dumps(data, indent=2))

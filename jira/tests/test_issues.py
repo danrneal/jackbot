@@ -3,145 +3,144 @@ import unittest
 from unittest.mock import patch
 from jira import jira
 from jira.issues import (
-    issue_event, get_parent_issue, get_issues_to_estimate,
+    issue_event, get_issue_sprint, get_sprint_stories,
     set_backlog_issue_estimate, set_issue_estimates
 )
 
 
 class IssuesTest(unittest.TestCase):
 
-    @patch('jira.issues.get_parent_issue')
-    def test_only_correct_project_gets_acted_on(self, mock_get_parent_issue):
-        webhook = {
+    @patch('jira.issues.get_issue_sprint')
+    @patch('jira.issues.q.get')
+    def test_incorrect_project_is_ignored(
+        self, mock_q_get, mock_get_issue_sprint
+    ):
+        mock_q_get.return_value = {
             "issue": {
                 "fields": {
-                    "issuetype": {
-                        "name": "Story",
-                        "subtask": False
-                    },
                     "project": {
                         "key": "NOT-" + jira.PROJ_KEY
                     }
                 }
             }
         }
-        issue_event(webhook)
-        webhook['issue']['fields']['issuetype']['name'] = "Bug"
-        webhook['issue']['fields']['project']['key'] = jira.PROJ_KEY
-        issue_event(webhook)
-        mock_get_parent_issue.assert_not_called()
+        issue_event()
+        mock_get_issue_sprint.assert_not_called()
 
-    @patch('jira.issues.get_issues_to_estimate')
-    @patch('jira.jira.get_issue')
-    def test_get_parent_issue_gets_itself_if_story(
-        self, mock_get_issue, mock_get_issues_to_estimate
+    @patch('jira.issues.get_issue_sprint')
+    @patch('jira.issues.q.get')
+    def test_correct_project_is_acted_on(
+        self, mock_q_get, mock_get_issue_sprint
     ):
-        mock_get_issue.return_value = {'key': 'TEST-1'}
-        get_parent_issue({
-            "key": "TEST-1",
-            "fields": {
-                "issuetype": {
-                    "name": "Story",
-                    "subtask": False
+        mock_q_get.side_effect = [{
+            "issue": {
+                "key": "TEST-1",
+                "fields": {
+                    "project": {
+                        "key": jira.PROJ_KEY
+                    }
                 }
             }
-        })
-        mock_get_issue.assert_called_once_with('TEST-1')
-        mock_get_issues_to_estimate.assert_called_once_with({'key': 'TEST-1'})
+        }, None]
+        issue_event()
+        mock_get_issue_sprint.assert_called_once_with("TEST-1")
 
-    @patch('jira.issues.get_issues_to_estimate')
-    @patch('jira.jira.get_issue')
-    def test_get_parent_issue_gets_parent_if_subtask(
-        self, mock_get_issue, mock_get_issues_to_estimate
-    ):
-        mock_get_issue.return_value = {'key': 'TEST-2'}
-        get_parent_issue({
-            "key": "TEST-1",
-            "fields": {
-                "issuetype": {
-                    "name": "Story Task",
-                    "subtask": True
-                },
-                "parent": {
-                    "key": "TEST-2"
-                }
-            }
-        })
-        mock_get_issue.assert_called_once_with('TEST-2')
-        mock_get_issues_to_estimate.assert_called_once_with({'key': 'TEST-2'})
-
-    @patch('jira.jira.get_issue')
-    def test_get_parent_issue_ignores_404_exception(self, mock_get_issue):
-        http_error = requests.exceptions.HTTPError()
-        http_error.response = requests.Response()
-        http_error.response.status_code = 404
-        mock_get_issue.side_effect = http_error
-        get_parent_issue({
-            "key": "TEST-1",
-            "fields": {
-                "issuetype": {
-                    "name": "Story",
-                    "subtask": False
-                }
-            }
-        })  # should not raise
-
+    @patch('jira.issues.get_sprint_stories')
     @patch('jira.issues.set_backlog_issue_estimate')
-    @patch('jira.issues.set_issue_estimates')
-    @patch('jira.jira.get_issues_for_sprint')
-    def test_get_issues_to_estimate_sets_backlog_items_to_none(
-        self, mock_get_issues_for_sprint, mock_set_issue_estimates,
-        mock_set_backlog_issue_estimate
+    @patch('jira.jira.get_issue')
+    def test_get_issue_sprint_gets_issue_sprint(
+        self, mock_get_issue, mock_set_backlog_issue_estimate,
+            mock_get_sprint_stories
     ):
-        get_issues_to_estimate({
+        mock_get_issue.return_value = {
+            "key": "TEST-1",
+            "fields": {
+                "sprint": {
+                    "id": 1
+                }
+            }
+        }
+        get_issue_sprint("TEST-1")
+        mock_set_backlog_issue_estimate.assert_not_called()
+        mock_get_sprint_stories.assert_called_once_with(1)
+
+    @patch('jira.issues.get_sprint_stories')
+    @patch('jira.issues.set_backlog_issue_estimate')
+    @patch('jira.jira.get_issue')
+    def test_get_issue_sprint_deals_with_backlogged_items(
+        self, mock_get_issue, mock_set_backlog_issue_estimate,
+            mock_get_sprint_stories
+    ):
+        issue = {
             "key": "TEST-1",
             "fields": {
                 "sprint": None
             }
-        })
-        mock_get_issues_for_sprint.assert_not_called()
-        mock_set_issue_estimates.assert_not_called()
-        mock_set_backlog_issue_estimate.assert_called_once_with("TEST-1")
+        }
+        mock_get_issue.return_value = issue
+        get_issue_sprint("TEST-1")
+        mock_get_sprint_stories.assert_not_called()
+        mock_set_backlog_issue_estimate.assert_called_once_with(issue)
 
-    @patch('jira.issues.set_backlog_issue_estimate')
-    @patch('jira.issues.set_issue_estimates')
-    @patch('jira.jira.get_issues_for_sprint')
-    def test_get_issues_to_estimate_set_gets_sprint_issues(
-        self, mock_get_issues_for_sprint, mock_set_issue_estimates,
-        mock_set_backlog_issue_estimate
+    @patch('jira.jira.get_issue')
+    def test_get_issue_sprint_ignores_404_exception(self, mock_get_issue):
+        http_error = requests.exceptions.HTTPError()
+        http_error.response = requests.Response()
+        http_error.response.status_code = 404
+        mock_get_issue.side_effect = http_error
+        get_issue_sprint("TEST-1")  # should not raise
+
+    @patch('jira.jira.update_estimate')
+    @patch('jira.jira.get_estimate')
+    def test_set_backlog_issue_estimate_gets_parent_of_subtask(
+        self, mock_get_estimate, mock_update_estimate
     ):
-        mock_get_issues_for_sprint.return_value = [{'key': 'TEST-1'}]
-        get_issues_to_estimate({
-            "key": "TEST-1",
-            "fields": {
-                "sprint": {
-                    'id': 1
+        mock_get_estimate.return_value = 3
+        set_backlog_issue_estimate({
+            'fields': {
+                "parent": {
+                    'key': "TEST-1"
                 }
             }
         })
-        mock_set_backlog_issue_estimate.assert_not_called()
-        mock_get_issues_for_sprint.assert_called_once_with(1)
-        mock_set_issue_estimates.assert_called_once_with([{'key': 'TEST-1'}])
+        mock_get_estimate.assert_called_once_with("TEST-1")
+        mock_update_estimate.assert_called_once_with("TEST-1", None)
 
     @patch('jira.jira.update_estimate')
     @patch('jira.jira.get_estimate')
-    def test_set_backlog_issue_estimate_does_nothing_if_estimate_is_none(
+    def test_set_backlog_issue_estimate_gets_own_estimate_if_not_subtask(
         self, mock_get_estimate, mock_update_estimate
     ):
         mock_get_estimate.return_value = None
-        set_backlog_issue_estimate('TEST-1')
-        mock_get_estimate.assert_called_once_with('TEST-1')
+        set_backlog_issue_estimate({
+            'key': 'TEST-1',
+            'fields': {}
+        })
+        mock_get_estimate.assert_called_once_with("TEST-1")
         mock_update_estimate.assert_not_called()
 
-    @patch('jira.jira.update_estimate')
-    @patch('jira.jira.get_estimate')
-    def test_set_backlog_issue_estimate_updates_estimate_if_not_none(
-        self, mock_get_estimate, mock_update_estimate
+    @patch('jira.issues.set_issue_estimates')
+    @patch('jira.jira.get_issues_for_sprint')
+    def test_get_sprint_stories_only_gets_stories(
+        self, mock_get_issues_for_sprint, mock_set_issue_estimates
     ):
-        mock_get_estimate.return_value = 5
-        set_backlog_issue_estimate('TEST-1')
-        mock_get_estimate.assert_called_once_with('TEST-1')
-        mock_update_estimate.assert_called_once_with('TEST-1', None)
+        issue_1 = {
+            'fields': {
+                'issuetype': {
+                    'name': 'Bug'
+                }
+            }
+        }
+        issue_2 = {
+            'fields': {
+                'issuetype': {
+                    'name': 'Story'
+                }
+            }
+        }
+        mock_get_issues_for_sprint.return_value = [issue_1, issue_2]
+        get_sprint_stories(1)
+        mock_set_issue_estimates.assert_called_once_with([issue_2])
 
     @patch('jira.jira.update_estimate')
     @patch('jira.jira.get_estimate')
