@@ -39,6 +39,12 @@ def create_sprint(name, board_id):
     return json.loads(sprint)
 
 
+def get_issues_for_sprint(sprint_id):
+    url = f"/rest/agile/1.0/sprint/{sprint_id}/issue"
+    sprint_issues = api_call("GET", url)
+    return json.loads(sprint_issues)['issues']
+
+
 def add_issues_to_sprint(sprint_id, issue_keys):
     url = f"/rest/agile/1.0/sprint/{sprint_id}/issue"
     payload = {
@@ -61,7 +67,7 @@ def delete_sprint(sprint_id):
 
 
 def get_issue(issue_key):
-    url = f"/rest/api/3/issue/{issue_key}"
+    url = f"/rest/agile/1.0/issue/{issue_key}"
     issue = api_call("GET", url)
     return json.loads(issue)
 
