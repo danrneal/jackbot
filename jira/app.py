@@ -12,6 +12,7 @@ def webhook():
     if flask.request.method == 'POST':
         data = json.loads(flask.request.data.decode())
         if str(data.get("webhookEvent")).startswith("jira:issue_"):
+            print('putting in q')
             q.put(data)
         return 'OK'
     return 'JackBot is running!'
