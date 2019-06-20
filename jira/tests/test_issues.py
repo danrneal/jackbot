@@ -15,7 +15,7 @@ class IssuesTest(unittest.TestCase):
     def test_incorrect_project_is_ignored(
         self, mock_q_get, mock_get_issue_sprint
     ):
-        mock_q_get.return_value = {
+        mock_q_get.side_effect = [{
             "issue": {
                 "fields": {
                     "project": {
@@ -23,7 +23,7 @@ class IssuesTest(unittest.TestCase):
                     }
                 }
             }
-        }
+        }, 'shutdown']
         issue_event()
         mock_get_issue_sprint.assert_not_called()
 
@@ -41,7 +41,7 @@ class IssuesTest(unittest.TestCase):
                     }
                 }
             }
-        }, None]
+        }, 'shutdown']
         issue_event()
         mock_get_issue_sprint.assert_called_once_with("TEST-1")
 
