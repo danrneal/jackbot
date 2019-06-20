@@ -8,17 +8,15 @@ q = queue.Queue()
 def issue_event():
     while True:
         data = q.get()
-        if data is None:
+        if data is 'shutdown':
             break
-        print('got it from the q')
         issue = data.get('issue')
         if issue and issue['fields']['project']['key'] != jira.PROJ_KEY:
-            break
+            continue
         get_issue_sprint(issue['key'])
 
 
 def get_issue_sprint(issue_key):
-    print('getting issue sprint')
     try:
         issue = jira.get_issue(issue_key)
         sprint = issue['fields']['sprint']
@@ -32,7 +30,6 @@ def get_issue_sprint(issue_key):
 
 
 def get_sprint_stories(sprint_id):
-    print('getting sprint stories')
     sprint_issues = jira.get_issues_for_sprint(sprint_id)
     sprint_stories = [
         issue for issue in sprint_issues
@@ -42,7 +39,6 @@ def get_sprint_stories(sprint_id):
 
 
 def set_backlog_issue_estimate(issue):
-    print('setting backlog estimate')
     if issue['fields'].get('parent'):
         issue_key = issue['fields']['parent']['key']
     else:
@@ -53,7 +49,6 @@ def set_backlog_issue_estimate(issue):
 
 
 def set_issue_estimates(issues):
-    print('setting estimate')
     for issue in issues:
         estimate = 0
         for subtask in issue['fields']['subtasks']:
