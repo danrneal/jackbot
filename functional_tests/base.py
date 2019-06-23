@@ -1,4 +1,5 @@
 import os
+import random
 import requests
 import subprocess
 import time
@@ -19,9 +20,13 @@ class FunctionalTest(unittest.TestCase):
         if STAGING_SERVER:
             self.live_server_url = 'https://' + STAGING_SERVER
         else:
-            self.live_server_url = 'https://jackbot.serveo.net'
+            subdomain = ''.join(random.SystemRandom().choices(
+                'abcdefghijklmnopqrstuvwxyz0123456789',
+                k=random.randint(5, 16)
+            ))
+            self.live_server_url = f'https://{subdomain}.serveo.net'
             self.serveo = subprocess.Popen(
-                ['ssh', '-R', 'jackbot:80:localhost:5000', 'serveo.net'],
+                ['ssh', '-R', f'{subdomain}:80:localhost:5000', 'serveo.net'],
                 stdin=subprocess.DEVNULL
             )
             threading.Thread(target=app.run).start()
@@ -49,15 +54,25 @@ class FunctionalTest(unittest.TestCase):
         if not STAGING_SERVER:
             requests.request("POST", self.live_server_url + '/shutdown')
             self.serveo.kill()
+            self.serveo.wait()
 
     @staticmethod
     def setup_issue(issuetype, summary, parent_key=None):
         issue = jira.search_for_issue(issuetype, summary, parent_key)
         if issue:
             jira.transition_issue(issue['key'], "Backlog")
-            jira.update_estimate(issue['key'], None)
+            if parent_key:
+                jira.update_estimate(issue['key'], 0)
+            else:
+                jira.update_estimate(issue['key'], None)
         else:
-            issue = jira.create_issue(issuetype, summary, parent_key)
+            if parent_key:
+                estimate_field = jira.get_estimate_field(parent_key)
+                jira.create_issue(
+                    issuetype, summary, parent_key, **{estimate_field: 0}
+                )
+            else:
+                issue = jira.create_issue(issuetype, summary, parent_key)
         return issue
 
     @staticmethod
