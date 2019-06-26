@@ -1,4 +1,5 @@
 import base64
+import datetime
 import json
 import os
 import requests
@@ -43,6 +44,18 @@ def get_issues_for_sprint(sprint_id):
     url = f"/rest/agile/1.0/sprint/{sprint_id}/issue"
     sprint_issues = api_call("GET", url)
     return json.loads(sprint_issues)['issues']
+
+
+def start_sprint(sprint_id):
+    url = f"/rest/agile/1.0/sprint/{sprint_id}"
+    start_date = datetime.datetime.now()
+    end_date = start_date + datetime.timedelta(days=14)
+    payload = {
+        "state": "active",
+        "startDate": start_date.astimezone().isoformat(),
+        "endDate": end_date.astimezone().isoformat(),
+    }
+    api_call("POST", url, data=payload)
 
 
 def add_issues_to_sprint(sprint_id, issue_keys):
