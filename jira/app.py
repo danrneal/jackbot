@@ -1,20 +1,25 @@
 import flask
 import json
+import queue
 import threading
-from jira.issues import issue_event, q
+from jira.issues import issue_event, sprint_started
 
 app = flask.Flask(__name__)
-threading.Thread(target=issue_event).start()
+q = queue.Queue()
 
 
-@app.route('/', methods=['POST', 'GET'])
-def webhook():
-    if flask.request.method == 'POST':
-        data = json.loads(flask.request.data.decode())
+def handle_webhook_from_q():
+    while True:
+        data = q.get()
+        if data == 'shutdown':
+            break
         if str(data.get("webhookEvent")).startswith("jira:issue_"):
-            q.put(data)
-        return 'OK'
-    return 'JackBot is running!'
+            issue_event(data)
+        elif str(data.get("webhookEvent")) == "jira:sprint_started":
+            sprint_started(data)
+
+
+threading.Thread(target=handle_webhook_from_q).start()
 
 
 def shutdown_server():
@@ -23,6 +28,15 @@ def shutdown_server():
     if func is None:
         return
     func()
+
+
+@app.route('/', methods=['POST', 'GET'])
+def webhook():
+    if flask.request.method == 'POST':
+        data = json.loads(flask.request.data.decode())
+        q.put(data)
+        return 'OK'
+    return 'JackBot is running!'
 
 
 @app.route('/shutdown', methods=['POST'])

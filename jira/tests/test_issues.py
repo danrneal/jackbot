@@ -11,11 +11,8 @@ from jira.issues import (
 class IssuesTest(unittest.TestCase):
 
     @patch('jira.issues.get_issue_sprint')
-    @patch('jira.issues.q.get')
-    def test_incorrect_project_is_ignored(
-        self, mock_q_get, mock_get_issue_sprint
-    ):
-        mock_q_get.side_effect = [{
+    def test_incorrect_project_is_ignored(self, mock_get_issue_sprint):
+        issue_event({
             "issue": {
                 "fields": {
                     "project": {
@@ -23,16 +20,12 @@ class IssuesTest(unittest.TestCase):
                     }
                 }
             }
-        }, 'shutdown']
-        issue_event()
+        })
         mock_get_issue_sprint.assert_not_called()
 
     @patch('jira.issues.get_issue_sprint')
-    @patch('jira.issues.q.get')
-    def test_correct_project_is_acted_on(
-        self, mock_q_get, mock_get_issue_sprint
-    ):
-        mock_q_get.side_effect = [{
+    def test_correct_project_is_acted_on(self, mock_get_issue_sprint):
+        issue_event({
             "issue": {
                 "key": "TEST-1",
                 "fields": {
@@ -41,8 +34,7 @@ class IssuesTest(unittest.TestCase):
                     }
                 }
             }
-        }, 'shutdown']
-        issue_event()
+        })
         mock_get_issue_sprint.assert_called_once_with("TEST-1")
 
     @patch('jira.issues.get_sprint_stories')

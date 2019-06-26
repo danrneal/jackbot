@@ -5,15 +5,15 @@ from jira import jira
 q = queue.Queue()
 
 
-def issue_event():
-    while True:
-        data = q.get()
-        if data is 'shutdown':
-            break
-        issue = data.get('issue')
-        if issue and issue['fields']['project']['key'] != jira.PROJ_KEY:
-            continue
-        get_issue_sprint(issue['key'])
+def issue_event(data):
+    issue = data.get('issue')
+    if issue and issue['fields']['project']['key'] != jira.PROJ_KEY:
+        return
+    get_issue_sprint(issue['key'])
+
+
+def sprint_started(data):
+    pass
 
 
 def get_issue_sprint(issue_key):
