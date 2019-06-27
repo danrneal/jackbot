@@ -132,7 +132,7 @@ def get_transition_id(issue_key, transition_name):
         transition['id']
         for transition
         in transitions
-        if transition["name"] == transition_name
+        if transition["name"].strip() == transition_name
     )
     return transition_id
 

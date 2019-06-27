@@ -1,5 +1,4 @@
 import os
-import random
 import requests
 import subprocess
 import time
@@ -12,6 +11,7 @@ MAX_WAIT = 20
 
 if not STAGING_SERVER:
     from jira.app import app
+    SERVEO_SUBDOMAIN = os.environ.get('SERVEO_SUBDOMAIN')
 
 
 class FunctionalTest(unittest.TestCase):
@@ -20,10 +20,7 @@ class FunctionalTest(unittest.TestCase):
         if STAGING_SERVER:
             self.live_server_url = 'https://' + STAGING_SERVER
         else:
-            subdomain = ''.join(random.SystemRandom().choices(
-                'abcdefghijklmnopqrstuvwxyz0123456789',
-                k=random.randint(5, 16)
-            ))
+            subdomain = SERVEO_SUBDOMAIN
             self.live_server_url = f'https://{subdomain}.serveo.net'
             self.serveo = subprocess.Popen(
                 ['ssh', '-R', f'{subdomain}:80:localhost:5000', 'serveo.net'],

@@ -7,13 +7,8 @@ q = queue.Queue()
 
 def issue_event(data):
     issue = data.get('issue')
-    if issue and issue['fields']['project']['key'] != jira.PROJ_KEY:
-        return
-    get_issue_sprint(issue['key'])
-
-
-def sprint_started(data):
-    pass
+    if issue and issue['fields']['project']['key'] == jira.PROJ_KEY:
+        get_issue_sprint(issue['key'])
 
 
 def get_issue_sprint(issue_key):

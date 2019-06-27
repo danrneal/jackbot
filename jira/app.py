@@ -2,7 +2,8 @@ import flask
 import json
 import queue
 import threading
-from jira.issues import issue_event, sprint_started
+from jira.issues import issue_event
+from jira.sprints import sprint_started
 
 app = flask.Flask(__name__)
 q = queue.Queue()
@@ -15,7 +16,7 @@ def handle_webhook_from_q():
             break
         if str(data.get("webhookEvent")).startswith("jira:issue_"):
             issue_event(data)
-        elif str(data.get("webhookEvent")) == "jira:sprint_started":
+        elif str(data.get("webhookEvent")) == "sprint_started":
             sprint_started(data)
 
 

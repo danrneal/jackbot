@@ -46,11 +46,11 @@ class WebhookTest(unittest.TestCase):
         self, mock_q_get, mock_issue_event, mock_sprint_started
     ):
         mock_q_get.side_effect = [{
-            "webhookEvent": "jira:sprint_started"
+            "webhookEvent": "sprint_started"
         }, 'shutdown']
         handle_webhook_from_q()
         mock_sprint_started.assert_called_once_with({
-            "webhookEvent": "jira:sprint_started"
+            "webhookEvent": "sprint_started"
         })
         mock_issue_event.assert_not_called()
 
