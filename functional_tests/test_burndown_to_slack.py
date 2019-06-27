@@ -27,15 +27,3 @@ class BurndownTest(FunctionalTest):
         message = slack.get_message(CHANNEL_ID, WEBHOOK_URL)
         self.assertIn('BURNDOWN', json.dumps(message))
         self.assertIn('27', json.dumps(message))
-
-        # # Abe updates an estimate and transitions a subtask to Done. The next
-        # # Slack notification has the correct burndown number.
-        # parent = jira.get_issue(self.issue_keys[0])
-        # subtasks = parent['fields']['subtasks']
-        # jira.update_estimate(subtasks[0]['key'], 20)
-        # jira.transition_issue(subtasks[1]['key'], "Archive", "Won't Do")
-        # # jira.postpone_sprint(self.sprint_id)
-        # jira.start_sprint(self.sprint_id)
-        # message = slack.get_message(CHANNEL_ID, WEBHOOK_URL)
-        # self.assertIn('BURNDOWN', json.dumps(message))
-        # self.assertIn('27', json.dumps(message))

@@ -53,4 +53,4 @@ def get_message(channel_id, webhook_url):
 
 def send_message(message):
     data = json.dumps(message)
-    resp = requests.request("POST", WEBHOOK_URL, data=data, headers=headers)
+    requests.request("POST", WEBHOOK_URL, data=data, headers=headers)

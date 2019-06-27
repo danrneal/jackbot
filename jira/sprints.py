@@ -8,6 +8,11 @@ def sprint_started(data):
         get_burndown_issues(sprint['id'], sprint['name'])
 
 
+def get_active_sprint_info():
+    sprint = jira.get_active_sprint()
+    get_burndown_issues(sprint['id'], sprint['name'])
+
+
 def get_burndown_issues(sprint_id, sprint_name):
     sprint_issues = jira.get_issues_for_sprint(sprint_id)
     burndown_issue_keys = [

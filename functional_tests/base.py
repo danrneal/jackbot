@@ -1,5 +1,6 @@
 import os
 import requests
+import socket
 import subprocess
 import time
 import threading
@@ -20,13 +21,17 @@ class FunctionalTest(unittest.TestCase):
         if STAGING_SERVER:
             self.live_server_url = 'https://' + STAGING_SERVER
         else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind(('localhost', 0))
+            port = sock.getsockname()[1]
+            sock.close()
             subdomain = SERVEO_SUBDOMAIN
             self.live_server_url = f'https://{subdomain}.serveo.net'
             self.serveo = subprocess.Popen(
-                ['ssh', '-R', f'{subdomain}:80:localhost:5000', 'serveo.net'],
+                ['ssh', '-R', f'{subdomain}:80:localhost:{port}', 'serveo.net'],
                 stdin=subprocess.DEVNULL
             )
-            threading.Thread(target=app.run).start()
+            threading.Thread(target=app.run, kwargs={'port': port}).start()
         sprint = jira.create_sprint("TEST Sprint", jira.BOARD_ID)
         self.sprint_id = sprint['id']
         self.issue_keys = []

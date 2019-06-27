@@ -40,6 +40,19 @@ def create_sprint(name, board_id):
     return json.loads(sprint)
 
 
+def get_active_sprint():
+    url = f"/rest/agile/1.0/board/{BOARD_ID}/sprint"
+    response = api_call("GET", url)
+    sprints = json.loads(response)['values']
+    active_sprint = next(
+        sprint
+        for sprint
+        in sprints
+        if sprint['state'] == 'active'
+    )
+    return active_sprint
+
+
 def get_issues_for_sprint(sprint_id):
     url = f"/rest/agile/1.0/sprint/{sprint_id}/issue"
     sprint_issues = api_call("GET", url)
@@ -54,14 +67,6 @@ def start_sprint(sprint_id):
         "state": "active",
         "startDate": start_date.astimezone().isoformat(),
         "endDate": end_date.astimezone().isoformat(),
-    }
-    api_call("POST", url, data=payload)
-
-
-def postpone_sprint(sprint_id):
-    url = f"/rest/agile/1.0/sprint/{sprint_id}"
-    payload = {
-        "state": "future"
     }
     api_call("POST", url, data=payload)
 

@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import patch
 from jira import jira
 from jira.sprints import (
-    sprint_started, get_burndown_issues, add_issue_estimates
+    sprint_started, get_burndown_issues, add_issue_estimates,
+    get_active_sprint_info
 )
 
 
@@ -86,3 +87,15 @@ class SprintsTest(unittest.TestCase):
         mock_get_estimate.side_effect = [2, None, 8]
         add_issue_estimates(['TEST-1', 'TEST-2', 'TEST-3'], 'TEST SPRINT')
         mock_build_message.assert_called_once_with(10, 'TEST SPRINT')
+
+    @patch('jira.sprints.get_burndown_issues')
+    @patch('jira.jira.get_active_sprint')
+    def test_get_active_sprint_id_and_name(
+            self, mock_get_active_sprint, mock_get_burndown_issues
+    ):
+        mock_get_active_sprint.return_value = {
+            'id': 1,
+            'name': 'TEST SPRINT'
+        }
+        get_active_sprint_info()
+        mock_get_burndown_issues.assert_called_once_with(1, 'TEST SPRINT')
