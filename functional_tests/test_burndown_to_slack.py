@@ -1,3 +1,4 @@
+import json
 import os
 from functional_tests.base import FunctionalTest
 from jira import jira
@@ -15,13 +16,26 @@ class BurndownTest(FunctionalTest):
         parent = jira.get_issue(self.issue_keys[0])
         subtasks = parent['fields']['subtasks']
         jira.update_estimate(subtasks[0]['key'], 8)
-        jira.update_estimate(subtasks[1]['key'], 3)
-        parent = jira.get_issue(self.issue_keys[2])
+        jira.transition_issue(subtasks[0]['key'], "Archive", "Won't Do")
+        jira.update_estimate(subtasks[1]['key'], 20)
+        parent = jira.get_issue(self.issue_keys[1])
         subtasks = parent['fields']['subtasks']
         jira.update_estimate(subtasks[0]['key'], 5)
         jira.update_estimate(subtasks[1]['key'], 2)
         jira.add_issues_to_sprint(self.sprint_id, self.issue_keys[:2])
         jira.start_sprint(self.sprint_id)
         message = slack.get_message(CHANNEL_ID, WEBHOOK_URL)
-        self.assertIn('Burndown', message.get('text'))
-        self.assertIn('18 hours', message.get('text'))
+        self.assertIn('BURNDOWN', json.dumps(message))
+        self.assertIn('27', json.dumps(message))
+
+        # # Abe updates an estimate and transitions a subtask to Done. The next
+        # # Slack notification has the correct burndown number.
+        # parent = jira.get_issue(self.issue_keys[0])
+        # subtasks = parent['fields']['subtasks']
+        # jira.update_estimate(subtasks[0]['key'], 20)
+        # jira.transition_issue(subtasks[1]['key'], "Archive", "Won't Do")
+        # # jira.postpone_sprint(self.sprint_id)
+        # jira.start_sprint(self.sprint_id)
+        # message = slack.get_message(CHANNEL_ID, WEBHOOK_URL)
+        # self.assertIn('BURNDOWN', json.dumps(message))
+        # self.assertIn('27', json.dumps(message))

@@ -58,6 +58,14 @@ def start_sprint(sprint_id):
     api_call("POST", url, data=payload)
 
 
+def postpone_sprint(sprint_id):
+    url = f"/rest/agile/1.0/sprint/{sprint_id}"
+    payload = {
+        "state": "future"
+    }
+    api_call("POST", url, data=payload)
+
+
 def add_issues_to_sprint(sprint_id, issue_keys):
     url = f"/rest/agile/1.0/sprint/{sprint_id}/issue"
     payload = {

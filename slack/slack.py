@@ -4,6 +4,12 @@ import requests
 import time
 
 API_TOKEN = os.environ['SLACK_API_TOKEN']
+WEBHOOK_URL = os.environ.get('SLACK_LIVE_WEBHOOK_URL')
+
+if not WEBHOOK_URL:
+    WEBHOOK_URL = os.environ.get('SLACK_TEST_WEBHOOK_URL')
+
+headers = {"Content-Type": "application/json"}
 
 
 def get_message(channel_id, webhook_url):
@@ -11,7 +17,7 @@ def get_message(channel_id, webhook_url):
     message_ts = None
     start = time.time()
     try:
-        while time.time() - start < 60:
+        while time.time() - start < 20:
 
             # get 10 newest messages from channel
             url = f"https://slack.com/api/conversations.history"
@@ -31,7 +37,7 @@ def get_message(channel_id, webhook_url):
                     message_ts = message['ts']
                     return message
 
-            time.sleep(5)
+            time.sleep(0.5)
 
     finally:
         if message_ts:
@@ -43,3 +49,8 @@ def get_message(channel_id, webhook_url):
             if not response.ok:
                 print(response.text)
                 response.raise_for_status()
+
+
+def send_message(message):
+    data = json.dumps(message)
+    resp = requests.request("POST", WEBHOOK_URL, data=data, headers=headers)
