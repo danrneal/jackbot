@@ -1,5 +1,11 @@
+import queue
+import schedule
+import time
 from jira import jira
 from slack import webhooks
+
+ALERT_TIME = '09:00'
+sched_q = queue.Queue()
 
 
 def sprint_started(data):
@@ -32,3 +38,19 @@ def add_issue_estimates(issue_keys, sprint_name):
         if estimate:
             burndown += estimate
     webhooks.build_message(burndown, sprint_name)
+
+
+def scheduler():
+    schedule.every().monday.at(ALERT_TIME).do(get_active_sprint_info)
+    schedule.every().tuesday.at(ALERT_TIME).do(get_active_sprint_info)
+    schedule.every().wednesday.at(ALERT_TIME).do(get_active_sprint_info)
+    schedule.every().thursday.at(ALERT_TIME).do(get_active_sprint_info)
+    schedule.every().friday.at(ALERT_TIME).do(get_active_sprint_info)
+    while True:
+        try:
+            data = sched_q.get(block=False)
+            if data == 'shutdown':
+                break
+        except queue.Empty:
+            schedule.run_pending()
+            time.sleep(1)

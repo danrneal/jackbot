@@ -3,7 +3,7 @@ import json
 import queue
 import threading
 from jira.issues import issue_event
-from jira.sprints import sprint_started
+from jira.sprints import sprint_started, scheduler, sched_q
 
 app = flask.Flask(__name__)
 q = queue.Queue()
@@ -21,10 +21,12 @@ def handle_webhook_from_q():
 
 
 threading.Thread(target=handle_webhook_from_q).start()
+threading.Thread(target=scheduler).start()
 
 
 def shutdown_server():
     q.put('shutdown')
+    sched_q.put('shutdown')
     func = flask.request.environ.get('werkzeug.server.shutdown')
     if func is None:
         return
