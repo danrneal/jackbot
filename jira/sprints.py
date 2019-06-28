@@ -1,3 +1,4 @@
+import os
 import queue
 import schedule
 import time
@@ -5,6 +6,10 @@ from jira import jira
 from slack import webhooks
 
 ALERT_TIME = '09:00'
+live = False
+WEBHOOK_URL = os.environ.get('SLACK_LIVE_WEBHOOK_URL')
+if WEBHOOK_URL:
+    live = True
 sched_q = queue.Queue()
 
 
@@ -20,15 +25,20 @@ def get_active_sprint_info():
 
 
 def get_burndown_issues(sprint_id, sprint_name):
-    sprint_issues = jira.get_issues_for_sprint(sprint_id)
-    burndown_issue_keys = [
-        issue['key'] for issue in sprint_issues
-        if (
-            issue['fields']['issuetype']['name'] != 'Story' and
-            issue['fields']['status']['statusCategory']['name'] != 'Done'
-        )
-    ]
-    add_issue_estimates(burndown_issue_keys, sprint_name)
+    if (
+        (sprint_name == 'TEST SPRINT' and not live) or
+        (sprint_name != 'TEST SPRINT' and live)
+    ):
+
+        sprint_issues = jira.get_issues_for_sprint(sprint_id)
+        burndown_issue_keys = [
+            issue['key'] for issue in sprint_issues
+            if (
+                issue['fields']['issuetype']['name'] != 'Story' and
+                issue['fields']['status']['statusCategory']['name'] != 'Done'
+            )
+        ]
+        add_issue_estimates(burndown_issue_keys, sprint_name)
 
 
 def add_issue_estimates(issue_keys, sprint_name):

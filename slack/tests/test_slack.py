@@ -10,9 +10,9 @@ class SlackTest(unittest.TestCase):
         mock_request.return_value = Mock()
         mock_request.return_value.status_code = 200
         mock_request.return_value.text = 'ok'
-        slack.send_message('test message')
+        slack.send_message({'key': 'value'})
         mock_request.assert_called_once_with(
             "POST", slack.WEBHOOK_URL,
-            data='test message',
+            data='{"key": "value"}',
             headers=slack.headers
         )
