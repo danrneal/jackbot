@@ -30,16 +30,6 @@ def api_call(method, endpoint, data=None):
     return response.text
 
 
-def create_sprint(name, board_id):
-    url = '/rest/agile/1.0/sprint'
-    payload = {
-        "name": name,
-        "originBoardId": board_id
-    }
-    sprint = api_call("POST", url, data=payload)
-    return json.loads(sprint)
-
-
 def get_active_sprint():
     url = f"/rest/agile/1.0/board/{BOARD_ID}/sprint"
     response = api_call("GET", url)
@@ -53,10 +43,14 @@ def get_active_sprint():
     return active_sprint
 
 
-def get_issues_for_sprint(sprint_id):
-    url = f"/rest/agile/1.0/sprint/{sprint_id}/issue"
-    sprint_issues = api_call("GET", url)
-    return json.loads(sprint_issues)['issues']
+def create_sprint(name, board_id):
+    url = '/rest/agile/1.0/sprint'
+    payload = {
+        "name": name,
+        "originBoardId": board_id
+    }
+    sprint = api_call("POST", url, data=payload)
+    return json.loads(sprint)
 
 
 def start_sprint(sprint_id):
@@ -69,6 +63,17 @@ def start_sprint(sprint_id):
         "endDate": end_date.astimezone().isoformat(),
     }
     api_call("POST", url, data=payload)
+
+
+def delete_sprint(sprint_id):
+    url = f"/rest/agile/1.0/sprint/{sprint_id}"
+    api_call("DELETE", url)
+
+
+def get_issues_for_sprint(sprint_id):
+    url = f"/rest/agile/1.0/sprint/{sprint_id}/issue"
+    sprint_issues = api_call("GET", url)
+    return json.loads(sprint_issues)['issues']
 
 
 def add_issues_to_sprint(sprint_id, issue_keys):
@@ -87,15 +92,30 @@ def remove_issues_from_sprint(issue_keys):
     api_call("POST", url, data=payload)
 
 
-def delete_sprint(sprint_id):
-    url = f"/rest/agile/1.0/sprint/{sprint_id}"
-    api_call("DELETE", url)
-
-
 def get_issue(issue_key):
     url = f"/rest/agile/1.0/issue/{issue_key}"
     issue = api_call("GET", url)
     return json.loads(issue)
+
+
+def get_estimate(issue_key):
+    url = f"/rest/agile/1.0/issue/{issue_key}/estimation?boardId={BOARD_ID}"
+    estimate = api_call("GET", url)
+    return json.loads(estimate).get('value')
+
+
+def get_estimate_field(issue_key):
+    url = f"/rest/agile/1.0/issue/{issue_key}/estimation?boardId={BOARD_ID}"
+    estimate = api_call("GET", url)
+    return json.loads(estimate).get('fieldId')
+
+
+def update_estimate(issue_key, estimate):
+    url = f"/rest/agile/1.0/issue/{issue_key}/estimation?boardId={BOARD_ID}"
+    payload = {
+        'value': estimate
+    }
+    api_call("PUT", url, data=payload)
 
 
 def search_for_issue(issuetype, summary, parent_key=None):
@@ -165,26 +185,6 @@ def transition_issue(issue_key, transition_name, resolution=None):
             }
         }
     api_call("POST", url, data=payload)
-
-
-def get_estimate(issue_key):
-    url = f"/rest/agile/1.0/issue/{issue_key}/estimation?boardId={BOARD_ID}"
-    estimate = api_call("GET", url)
-    return json.loads(estimate).get('value')
-
-
-def get_estimate_field(issue_key):
-    url = f"/rest/agile/1.0/issue/{issue_key}/estimation?boardId={BOARD_ID}"
-    estimate = api_call("GET", url)
-    return json.loads(estimate).get('fieldId')
-
-
-def update_estimate(issue_key, estimate):
-    url = f"/rest/agile/1.0/issue/{issue_key}/estimation?boardId={BOARD_ID}"
-    payload = {
-        'value': estimate
-    }
-    api_call("PUT", url, data=payload)
 
 
 def generate_file(data, filename=None):

@@ -6,17 +6,19 @@ from jira import jira
 class JiraTest(unittest.TestCase):
 
     @patch('requests.request')
-    def test_get_issue(self, mock_request):
+    def test_get_active_sprint(self, mock_request):
         mock_request.return_value = Mock()
         mock_request.return_value.status_code = 200
-        mock_request.return_value.text = '{"key": "TEST-1"}'
-        issue = jira.get_issue('TEST-1')
+        mock_request.return_value.text = (
+            '{"values": [{"state": "closed"}, {"state": "active"}]}'
+        )
+        sprint = jira.get_active_sprint()
         mock_request.assert_called_once_with(
-            "GET", f"{jira.SERVER}/rest/agile/1.0/issue/TEST-1",
+            "GET", f"{jira.SERVER}/rest/agile/1.0/board/{jira.BOARD_ID}/sprint",
             data=None,
             headers=jira.headers
         )
-        self.assertEqual({"key": "TEST-1"}, issue)
+        self.assertEqual(sprint, {"state": "active"})
 
     @patch('requests.request')
     def test_get_issues_for_sprint(self, mock_request):
@@ -30,6 +32,19 @@ class JiraTest(unittest.TestCase):
             headers=jira.headers
         )
         self.assertEqual([{"key": "TEST-1"}], sprint_issues)
+
+    @patch('requests.request')
+    def test_get_issue(self, mock_request):
+        mock_request.return_value = Mock()
+        mock_request.return_value.status_code = 200
+        mock_request.return_value.text = '{"key": "TEST-1"}'
+        issue = jira.get_issue('TEST-1')
+        mock_request.assert_called_once_with(
+            "GET", f"{jira.SERVER}/rest/agile/1.0/issue/TEST-1",
+            data=None,
+            headers=jira.headers
+        )
+        self.assertEqual({"key": "TEST-1"}, issue)
 
     @patch('requests.request')
     def test_get_estimate(self, mock_request):
@@ -59,18 +74,3 @@ class JiraTest(unittest.TestCase):
             data='{"value": 11}',
             headers=jira.headers
         )
-
-    @patch('requests.request')
-    def test_get_active_sprint(self, mock_request):
-        mock_request.return_value = Mock()
-        mock_request.return_value.status_code = 200
-        mock_request.return_value.text = (
-            '{"values": [{"state": "closed"}, {"state": "active"}]}'
-        )
-        sprint = jira.get_active_sprint()
-        mock_request.assert_called_once_with(
-            "GET", f"{jira.SERVER}/rest/agile/1.0/board/{jira.BOARD_ID}/sprint",
-            data=None,
-            headers=jira.headers
-        )
-        self.assertEqual(sprint, {"state": "active"})

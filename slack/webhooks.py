@@ -19,7 +19,7 @@ def build_message(burndown, sprint_name):
                 },
                 {
                     "type": "mrkdwn",
-                    "text": f"*Hours Remaining:*\n{burndown}"
+                    "text": f"*Hours Remaining:*\n{int(burndown)}"
                 }
             ]
         }]

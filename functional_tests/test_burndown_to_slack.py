@@ -24,6 +24,6 @@ class BurndownTest(FunctionalTest):
         jira.update_estimate(subtasks[1]['key'], 2)
         jira.add_issues_to_sprint(self.sprint_id, self.issue_keys[:2])
         jira.start_sprint(self.sprint_id)
-        message = slack.get_message(CHANNEL_ID, WEBHOOK_URL)
+        message = slack.get_latest_bot_message(CHANNEL_ID, WEBHOOK_URL)
         self.assertIn('BURNDOWN', json.dumps(message))
         self.assertIn('27', json.dumps(message))

@@ -18,20 +18,7 @@ if not STAGING_SERVER:
 class FunctionalTest(unittest.TestCase):
 
     def setUp(self):
-        if STAGING_SERVER:
-            self.live_server_url = 'https://' + STAGING_SERVER
-        else:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind(('localhost', 0))
-            port = sock.getsockname()[1]
-            sock.close()
-            subdomain = SERVEO_SUBDOMAIN
-            self.live_server_url = f'https://{subdomain}.serveo.net'
-            self.serveo = subprocess.Popen(
-                ['ssh', '-R', f'{subdomain}:80:localhost:{port}', 'serveo.net'],
-                stdin=subprocess.DEVNULL
-            )
-            threading.Thread(target=app.run, kwargs={'port': port}).start()
+        self.set_up_server()
         sprint = jira.create_sprint("TEST Sprint", jira.BOARD_ID)
         self.sprint_id = sprint['id']
         self.issue_keys = []
@@ -57,6 +44,22 @@ class FunctionalTest(unittest.TestCase):
             requests.request("POST", self.live_server_url + '/shutdown')
             self.serveo.kill()
             self.serveo.wait()
+
+    def set_up_server(self):
+        if STAGING_SERVER:
+            self.live_server_url = 'https://' + STAGING_SERVER
+        else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind(('localhost', 0))
+            port = sock.getsockname()[1]
+            sock.close()
+            subdomain = SERVEO_SUBDOMAIN
+            self.live_server_url = f'https://{subdomain}.serveo.net'
+            self.serveo = subprocess.Popen(
+                ['ssh', '-R', f'{subdomain}:80:localhost:{port}', 'serveo.net'],
+                stdin=subprocess.DEVNULL
+            )
+            threading.Thread(target=app.run, kwargs={'port': port}).start()
 
     @staticmethod
     def setup_issue(issuetype, summary, parent_key=None):
