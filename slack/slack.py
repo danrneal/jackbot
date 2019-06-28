@@ -55,14 +55,17 @@ def get_latest_bot_message(channel_id, webhook_url):
 
 
 def clear_old_bot_messages(channel_id, webhook_url):
-    message_ts = []
-    messages = get_messages(channel_id)
-    bot_id = webhook_url.split('/')[-2]
-    for message in messages:
-        if message.get('bot_id') == bot_id:
-            message_ts.append(message['ts'])
-    for ts in message_ts:
-        delete_message(channel_id, ts)
+    while True:
+        message_ts = []
+        messages = get_messages(channel_id)
+        bot_id = webhook_url.split('/')[-2]
+        for message in messages:
+            if message.get('bot_id') == bot_id:
+                message_ts.append(message['ts'])
+        if not message_ts:
+            break
+        for ts in message_ts:
+            delete_message(channel_id, ts)
 
 
 def send_message(message):
