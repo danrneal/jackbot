@@ -10,7 +10,7 @@ CHANNEL_ID = os.environ['SLACK_TEST_CHANNEL_ID']
 
 class BurndownTest(FunctionalTest):
 
-    def test_burndown_delevered_to_slack(self):
+    def test_burndown_delivered_to_slack(self):
         # Abe add some issues to a sprint with estimates. He then starts the
         # sprint. There is a notification in Slack with correct burndown number.
         parent = jira.get_issue(self.issue_keys[0])

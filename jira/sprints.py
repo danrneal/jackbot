@@ -26,8 +26,8 @@ def get_active_sprint_info():
 
 def get_burndown_issues(sprint_id, sprint_name):
     if (
-        (sprint_name == 'TEST SPRINT' and not live) or
-        (sprint_name != 'TEST SPRINT' and live)
+        (sprint_name == 'TEST Sprint' and not live) or
+        (sprint_name != 'TEST Sprint' and live)
     ):
 
         sprint_issues = jira.get_issues_for_sprint(sprint_id)

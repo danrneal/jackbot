@@ -23,11 +23,11 @@ class SprintsTest(unittest.TestCase):
         sprint_started({
             "sprint": {
                 "id": 1,
-                'name': 'TEST SPRINT',
+                'name': 'TEST Sprint',
                 "originBoardId": jira.BOARD_ID
             }
         })
-        mock_get_burndown_issues.assert_called_once_with(1, 'TEST SPRINT')
+        mock_get_burndown_issues.assert_called_once_with(1, 'TEST Sprint')
 
     @patch('jira.sprints.add_issue_estimates')
     @patch('jira.jira.get_issues_for_sprint')
@@ -74,9 +74,9 @@ class SprintsTest(unittest.TestCase):
             }
         }
         mock_get_issues_for_sprint.return_value = [issue_1, issue_2, issue_3]
-        get_burndown_issues(1, 'TEST SPRINT')
+        get_burndown_issues(1, 'TEST Sprint')
         mock_add_issue_estimates.assert_called_once_with(
-            ['TEST-2'], 'TEST SPRINT'
+            ['TEST-2'], 'TEST Sprint'
         )
 
     @patch('slack.webhooks.build_message')
@@ -85,8 +85,8 @@ class SprintsTest(unittest.TestCase):
         self, mock_get_estimate, mock_build_message
     ):
         mock_get_estimate.side_effect = [2, None, 8]
-        add_issue_estimates(['TEST-1', 'TEST-2', 'TEST-3'], 'TEST SPRINT')
-        mock_build_message.assert_called_once_with(10, 'TEST SPRINT')
+        add_issue_estimates(['TEST-1', 'TEST-2', 'TEST-3'], 'TEST Sprint')
+        mock_build_message.assert_called_once_with(10, 'TEST Sprint')
 
     @patch('jira.sprints.get_burndown_issues')
     @patch('jira.jira.get_active_sprint')
@@ -95,7 +95,7 @@ class SprintsTest(unittest.TestCase):
     ):
         mock_get_active_sprint.return_value = {
             'id': 1,
-            'name': 'TEST SPRINT'
+            'name': 'TEST Sprint'
         }
         get_active_sprint_info()
-        mock_get_burndown_issues.assert_called_once_with(1, 'TEST SPRINT')
+        mock_get_burndown_issues.assert_called_once_with(1, 'TEST Sprint')
