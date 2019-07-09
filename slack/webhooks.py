@@ -1,16 +1,15 @@
 from jira import jira
 from slack import slack
-import requests
 
 
 def build_message(sprint_info, estimates_missing=None):
-    requests.request("POST", url=estimates_missing)
+    jira.generate_file(estimates_missing)
     message = build_burndown_block(sprint_info)
     if estimates_missing:
         message['blocks'].extend(
             build_estimates_missing_block(estimates_missing)
         )
-        requests.request("POST", url='built')
+    jira.generate_file(message)
     slack.send_message(message)
 
 
