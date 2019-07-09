@@ -18,7 +18,7 @@ def build_message(sprint_info, estimates_missing=None, large_estimates=None):
 def build_burndown_block(sprint_info):
     sprint_url = f"{jira.SERVER}/secure/RapidBoard.jspa"
     sprint_url += f"?rapidView={jira.BOARD_ID}"
-    message = {
+    burndown_block = {
         "blocks": [{
             "type": "section",
             "text": {
@@ -37,7 +37,7 @@ def build_burndown_block(sprint_info):
             ]
         }]
     }
-    return message
+    return burndown_block
 
 
 def build_estimates_missing_block(estimates_missing):
@@ -79,7 +79,7 @@ def build_large_estimates_block(large_estimates):
         {
             "type": "section",
             "text": {
-                "type": "section",
+                "type": "mrkdwn",
                 "text": "These tasks are pretty big, consider splitting them"
             },
             "fields": [
