@@ -8,9 +8,6 @@ app = app.test_client()
 
 class WebhookTest(unittest.TestCase):
 
-    def tearDown(self):
-        app.post('/shutdown')
-
     def test_home_page_returns_correct_html(self):
         response = app.get('/')
         self.assertEqual('JackBot is running!', response.data.decode())

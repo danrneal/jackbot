@@ -3,7 +3,7 @@ import json
 import queue
 import threading
 from jira.issues import issue_event
-from jira.sprints import sprint_started, scheduler, sched_q
+from jira.sprints import sprint_started, scheduler
 
 app = flask.Flask(__name__)
 q = queue.Queue()
@@ -20,17 +20,8 @@ def handle_webhook_from_q():
             sprint_started(data)
 
 
-threading.Thread(target=handle_webhook_from_q).start()
-threading.Thread(target=scheduler).start()
-
-
-def shutdown_server():
-    q.put('shutdown')
-    sched_q.put('shutdown')
-    func = flask.request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        return
-    func()
+threading.Thread(target=handle_webhook_from_q, daemon=True).start()
+threading.Thread(target=scheduler, daemon=True).start()
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -40,9 +31,3 @@ def webhook():
         q.put(data)
         return 'OK'
     return 'JackBot is running!'
-
-
-@app.route('/shutdown', methods=['POST'])
-def shutdown():
-    shutdown_server()
-    return 'Server shutting down...'

@@ -1,3 +1,4 @@
+import importlib
 import os
 import requests
 import socket
@@ -11,7 +12,7 @@ STAGING_SERVER = os.environ.get('STAGING_SERVER')
 MAX_WAIT = 20
 
 if not STAGING_SERVER:
-    from jira.app import app
+    import jira.app as app
     SERVEO_SUBDOMAIN = os.environ.get('SERVEO_SUBDOMAIN')
 
 
@@ -45,7 +46,6 @@ class FunctionalTest(unittest.TestCase):
             jira.transition_issue(issue_key, "Archive", "Won't Do")
         jira.delete_sprint(self.sprint_id)
         if not STAGING_SERVER:
-            requests.request("POST", self.live_server_url + '/shutdown')
             self.serveo.kill()
             self.serveo.wait()
 
@@ -63,7 +63,12 @@ class FunctionalTest(unittest.TestCase):
                 ['ssh', '-R', f'{subdomain}:80:localhost:{port}', 'serveo.net'],
                 stdin=subprocess.DEVNULL
             )
-            threading.Thread(target=app.run, kwargs={'port': port}).start()
+            importlib.reload(app)
+            threading.Thread(
+                target=app.app.run,
+                daemon=True,
+                kwargs={'port': port}
+            ).start()
 
     @staticmethod
     def setup_issue(issuetype, summary, parent_key=None):

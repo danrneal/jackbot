@@ -1,5 +1,4 @@
 import os
-import queue
 import schedule
 import time
 from jira import jira
@@ -10,7 +9,6 @@ live = False
 WEBHOOK_URL = os.environ.get('SLACK_LIVE_WEBHOOK_URL')
 if WEBHOOK_URL:
     live = True
-sched_q = queue.Queue()
 
 
 def sprint_started(data):
@@ -75,10 +73,5 @@ def scheduler():
     schedule.every().thursday.at(ALERT_TIME).do(get_active_sprint_info)
     schedule.every().friday.at(ALERT_TIME).do(get_active_sprint_info)
     while True:
-        try:
-            data = sched_q.get(block=False)
-            if data == 'shutdown':
-                break
-        except queue.Empty:
-            schedule.run_pending()
-            time.sleep(1)
+        schedule.run_pending()
+        time.sleep(1)
