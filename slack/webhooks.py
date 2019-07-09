@@ -3,6 +3,7 @@ from slack import slack
 
 
 def build_message(sprint_info, estimates_missing=None):
+    print('building')
     print(estimates_missing)
     message = build_burndown_block(sprint_info)
     if estimates_missing:
