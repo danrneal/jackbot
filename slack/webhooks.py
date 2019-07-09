@@ -2,8 +2,14 @@ from jira import jira
 from slack import slack
 
 
-def build_message(sprint_info, estimates_missing=None, large_estimates=None):
+def build_message(
+    sprint_info, no_subtasks=None, estimates_missing=None, large_estimates=None
+):
     message = build_burndown_block(sprint_info)
+    if no_subtasks:
+        message['blocks'].extend(
+            build_no_subtasks_block(no_subtasks)
+        )
     if estimates_missing:
         message['blocks'].extend(
             build_estimates_missing_block(estimates_missing)
@@ -40,6 +46,34 @@ def build_burndown_block(sprint_info):
     return burndown_block
 
 
+def build_no_subtasks_block(no_subtasks):
+    issue_str = "*Stories:*"
+    for issue in no_subtasks:
+        url = f"{jira.SERVER}/browse/{issue['key']}"
+        issue_str += f"\n<{url}|:jira_{issue['type']}: {issue['key']}>"
+    no_subtasks_block = (
+        {
+            "type": "divider"
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": (
+                    "These stories don't have any tasks, consider adding some"
+                )
+            },
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": issue_str
+                }
+            ]
+        }
+    )
+    return no_subtasks_block
+
+
 def build_estimates_missing_block(estimates_missing):
     issue_str = "*Issues:*"
     for issue in estimates_missing:
@@ -66,6 +100,7 @@ def build_estimates_missing_block(estimates_missing):
         }
     )
     return estimates_missing_block
+
 
 def build_large_estimates_block(large_estimates):
     issue_str = "*Tasks:*"
