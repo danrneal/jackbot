@@ -148,6 +148,18 @@ def create_issue(issuetype, summary, parent_key=None, **kwargs):
         payload['fields']['parent'] = {
             "key": parent_key
         }
+    else:
+        payload['fields']['description'] = {
+            "type": "doc",
+            "version": 1,
+            "content": [{
+                "type": "paragraph",
+                "content": [{
+                    "type": "text",
+                    "text": "Test issue created by JackBot"
+                }]
+            }]
+        }
     issue = api_call("POST", url, data=payload)
     return json.loads(issue)
 

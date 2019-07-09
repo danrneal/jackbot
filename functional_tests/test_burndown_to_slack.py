@@ -13,7 +13,7 @@ class BurndownTest(FunctionalTest):
     def test_burndown_delivered_to_slack(self):
         slack.clear_old_bot_messages(CHANNEL_ID, WEBHOOK_URL)
 
-        # Abe add some issues to a sprint with estimates. He then starts the
+        # Abe adds some issues to a sprint with estimates. He then starts the
         # sprint. There is a notification in Slack with correct burndown number.
         parent = jira.get_issue(self.issue_keys[0])
         subtasks = parent['fields']['subtasks']
@@ -29,3 +29,13 @@ class BurndownTest(FunctionalTest):
         message = slack.get_latest_bot_message(CHANNEL_ID, WEBHOOK_URL)
         self.assertIn('BURNDOWN', json.dumps(message))
         self.assertIn('27', json.dumps(message))
+
+    def test_story_task_is_missing_to_slack(self):
+        slack.clear_old_bot_messages(CHANNEL_ID, WEBHOOK_URL)
+
+        # Abe adds a bug to the sprint without an estimate. He then
+        # starts the sprint. There is a notification in Slack detailing as much.
+        jira.add_issues_to_sprint(self.sprint_id, [self.issue_keys[4]])
+        jira.start_sprint(self.sprint_id)
+        message = slack.get_latest_bot_message(CHANNEL_ID, WEBHOOK_URL)
+        self.assertIn(self.issue_keys[4], json.dumps(message))

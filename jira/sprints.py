@@ -16,38 +16,46 @@ sched_q = queue.Queue()
 def sprint_started(data):
     sprint = data.get('sprint')
     if sprint['originBoardId'] == jira.BOARD_ID:
-        get_burndown_issues(sprint['id'], sprint['name'])
+        get_sprint_issues_by_type(sprint['id'], sprint['name'])
 
 
 def get_active_sprint_info():
     sprint = jira.get_active_sprint()
-    get_burndown_issues(sprint['id'], sprint['name'])
+    get_sprint_issues_by_type(sprint['id'], sprint['name'])
 
 
-def get_burndown_issues(sprint_id, sprint_name):
+def get_sprint_issues_by_type(sprint_id, sprint_name):
     if (
         (sprint_name == 'TEST Sprint' and not live) or
         (sprint_name != 'TEST Sprint' and live)
     ):
-
         sprint_issues = jira.get_issues_for_sprint(sprint_id)
-        burndown_issue_keys = [
-            issue['key'] for issue in sprint_issues
-            if (
-                issue['fields']['issuetype']['name'] != 'Story' and
-                issue['fields']['status']['statusCategory']['name'] != 'Done'
-            )
-        ]
-        add_issue_estimates(burndown_issue_keys, sprint_name)
+        burndown_issues = []
+        for issue in sprint_issues:
+            if issue['fields']['status']['statusCategory']['name'] != 'Done':
+                if issue['fields']['issuetype']['name'] != 'Story':
+                    burndown_issues.append({
+                        'key': issue['key'],
+                        'type': 'bug'
+                    })
+        get_message_info(sprint_name, burndown_issues)
 
 
-def add_issue_estimates(issue_keys, sprint_name):
+def get_message_info(sprint_name, burndown_issues):
     burndown = 0
-    for issue_key in issue_keys:
-        estimate = jira.get_estimate(issue_key)
+    estimate_missing = []
+    for issue in burndown_issues:
+        estimate = jira.get_estimate(issue['key'])
         if estimate:
             burndown += estimate
-    webhooks.build_message(burndown, sprint_name)
+        else:
+            estimate_missing.append(issue)
+    webhooks.build_message(
+        {
+            'name': sprint_name,
+            'burndown': int(burndown)
+        }, estimate_missing
+    )
 
 
 def scheduler():

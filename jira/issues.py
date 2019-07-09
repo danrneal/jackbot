@@ -39,7 +39,7 @@ def set_backlog_issue_estimate(issue):
     else:
         issue_key = issue['key']
     estimate = jira.get_estimate(issue_key)
-    if estimate:
+    if estimate is not None:
         jira.update_estimate(issue_key, None)
 
 

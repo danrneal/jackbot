@@ -31,6 +31,10 @@ class FunctionalTest(unittest.TestCase):
                     "Story Task", f"test_{i}{c}", issue['key']
                 )
                 self.subtask_keys.append(subtask['key'])
+        issue = self.setup_issue("Story", "test_3")
+        self.issue_keys.append(issue['key'])
+        issue = self.setup_issue("Bug", "test_4")
+        self.issue_keys.append(issue['key'])
         self.wait_for(lambda: self.assertEqual(
             requests.request("GET", self.live_server_url).text,
             "JackBot is running!"
