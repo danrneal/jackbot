@@ -48,7 +48,7 @@ class BurndownTest(FunctionalTest):
         parent = jira.get_issue(self.issue_keys[0])
         subtasks = parent['fields']['subtasks']
         jira.update_estimate(subtasks[0]['key'], 17)
-        jira.update_estimate(subtasks[0]['key'], 5)
+        jira.update_estimate(subtasks[1]['key'], 5)
         jira.add_issues_to_sprint(self.sprint_id, [self.issue_keys[0]])
         jira.start_sprint(self.sprint_id)
         message = slack.get_latest_bot_message(CHANNEL_ID, WEBHOOK_URL)
