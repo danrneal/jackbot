@@ -30,7 +30,7 @@ class BurndownTest(FunctionalTest):
         self.assertIn('BURNDOWN', json.dumps(message))
         self.assertIn('27', json.dumps(message))
 
-    def test_story_task_is_missing_to_slack(self):
+    def test_estimate_is_missing_to_slack(self):
         slack.clear_old_bot_messages(CHANNEL_ID, WEBHOOK_URL)
 
         # Abe adds a bug to the sprint without an estimate. He then
@@ -39,3 +39,18 @@ class BurndownTest(FunctionalTest):
         jira.start_sprint(self.sprint_id)
         message = slack.get_latest_bot_message(CHANNEL_ID, WEBHOOK_URL)
         self.assertIn(self.issue_keys[4], json.dumps(message))
+
+    def test_estimate_is_too_big_to_slack(self):
+        slack.clear_old_bot_messages(CHANNEL_ID, WEBHOOK_URL)
+
+        # Abe adds a story task with a big estimate. He then starts the
+        # sprint. There is a notification in Slack detailing as much.
+        parent = jira.get_issue(self.issue_keys[0])
+        subtasks = parent['fields']['subtasks']
+        jira.update_estimate(subtasks[0]['key'], 17)
+        jira.update_estimate(subtasks[0]['key'], 5)
+        jira.add_issues_to_sprint(self.sprint_id, [self.issue_keys[0]])
+        jira.start_sprint(self.sprint_id)
+        message = slack.get_latest_bot_message(CHANNEL_ID, WEBHOOK_URL)
+        self.assertIn(subtasks[0]['key'], json.dumps(message))
+        self.assertNotIn(subtasks[1]['key'], json.dumps(message))

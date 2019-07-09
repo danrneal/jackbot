@@ -30,31 +30,41 @@ def get_sprint_issues_by_type(sprint_id, sprint_name):
         (sprint_name != 'TEST Sprint' and live)
     ):
         sprint_issues = jira.get_issues_for_sprint(sprint_id)
-        burndown_issues = []
+        bugs = []
+        tasks = []
         for issue in sprint_issues:
             if issue['fields']['status']['statusCategory']['name'] != 'Done':
-                if issue['fields']['issuetype']['name'] != 'Story':
-                    burndown_issues.append({
+                issuetype = issue['fields']['issuetype']['name']
+                if issuetype in ['Bug', 'Critical']:
+                    bugs.append({
                         'key': issue['key'],
                         'type': 'bug'
                     })
-        get_message_info(sprint_name, burndown_issues)
+                elif issuetype in ['Task', 'Story Task']:
+                    tasks.append({
+                        'key': issue['key'],
+                        'type': 'task'
+                    })
+        get_message_info(sprint_name, bugs, tasks)
 
 
-def get_message_info(sprint_name, burndown_issues):
+def get_message_info(sprint_name, bugs, tasks):
     burndown = 0
     estimate_missing = []
-    for issue in burndown_issues:
+    large_estimates = []
+    for issue in bugs + tasks:
         estimate = jira.get_estimate(issue['key'])
         if estimate:
             burndown += estimate
+            if issue['type'] == 'task' and estimate > 16:
+                large_estimates.append(issue)
         else:
             estimate_missing.append(issue)
     webhooks.build_message(
         {
             'name': sprint_name,
             'burndown': int(burndown)
-        }, estimate_missing
+        }, estimate_missing, large_estimates
     )
 
 

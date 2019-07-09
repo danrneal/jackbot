@@ -56,11 +56,11 @@ class SprintsTest(unittest.TestCase):
             }
         }]
         get_sprint_issues_by_type(1, 'TEST Sprint')
-        mock_add_issue_estimates.assert_called_once_with('TEST Sprint', [])
+        mock_add_issue_estimates.assert_called_once_with('TEST Sprint', [], [])
 
     @patch('jira.sprints.get_message_info')
     @patch('jira.jira.get_issues_for_sprint')
-    def test_get_sprint_issues_by_type_does_not_include_stories_in_burndown(
+    def test_get_sprint_issues_by_type_ignores_stories(
         self, mock_get_issues_for_sprint, mock_add_issue_estimates
     ):
         mock_get_issues_for_sprint.return_value = [{
@@ -76,31 +76,97 @@ class SprintsTest(unittest.TestCase):
             }
         }]
         get_sprint_issues_by_type(1, 'TEST Sprint')
-        mock_add_issue_estimates.assert_called_once_with('TEST Sprint', [])
+        mock_add_issue_estimates.assert_called_once_with('TEST Sprint', [], [])
 
     @patch('jira.sprints.get_message_info')
     @patch('jira.jira.get_issues_for_sprint')
-    def test_get_sprint_issues_by_type_includes_non_stories_in_burndown(
+    def test_get_sprint_issues_by_type_separates_out_bugs(
         self, mock_get_issues_for_sprint, mock_add_issue_estimates
     ):
-        mock_get_issues_for_sprint.return_value = [{
-            'key': 'TEST-1',
-            'fields': {
-                'issuetype': {
-                    'name': 'Bug'
-                },
-                'status': {
-                    "statusCategory": {
-                        "name": "In Progress"
+        mock_get_issues_for_sprint.return_value = [
+            {
+                'key': 'TEST-1',
+                'fields': {
+                    'issuetype': {
+                        'name': 'Bug'
+                    },
+                    'status': {
+                        "statusCategory": {
+                            "name": "In Progress"
+                        }
+                    }
+                }
+            },
+            {
+                'key': 'TEST-2',
+                'fields': {
+                    'issuetype': {
+                        'name': 'Critical'
+                    },
+                    'status': {
+                        "statusCategory": {
+                            "name": "In Progress"
+                        }
                     }
                 }
             }
-        }]
+        ]
         get_sprint_issues_by_type(1, 'TEST Sprint')
-        mock_add_issue_estimates.assert_called_once_with('TEST Sprint', [{
-            'key': 'TEST-1',
-            'type': 'bug'
-        }])
+        mock_add_issue_estimates.assert_called_once_with('TEST Sprint', [
+            {
+                'key': 'TEST-1',
+                'type': 'bug'
+            },
+            {
+                'key': 'TEST-2',
+                'type': 'bug'
+            },
+        ], [])
+
+    @patch('jira.sprints.get_message_info')
+    @patch('jira.jira.get_issues_for_sprint')
+    def test_get_sprint_issues_by_type_separates_out_tasks(
+        self, mock_get_issues_for_sprint, mock_add_issue_estimates
+    ):
+        mock_get_issues_for_sprint.return_value = [
+            {
+                'key': 'TEST-1',
+                'fields': {
+                    'issuetype': {
+                        'name': 'Task'
+                    },
+                    'status': {
+                        "statusCategory": {
+                            "name": "In Progress"
+                        }
+                    }
+                }
+            },
+            {
+                'key': 'TEST-2',
+                'fields': {
+                    'issuetype': {
+                        'name': 'Story Task'
+                    },
+                    'status': {
+                        "statusCategory": {
+                            "name": "In Progress"
+                        }
+                    }
+                }
+            }
+        ]
+        get_sprint_issues_by_type(1, 'TEST Sprint')
+        mock_add_issue_estimates.assert_called_once_with('TEST Sprint', [], [
+            {
+                'key': 'TEST-1',
+                'type': 'task'
+            },
+            {
+                'key': 'TEST-2',
+                'type': 'task'
+            },
+        ])
 
     @patch('slack.webhooks.build_message')
     @patch('jira.jira.get_estimate')
@@ -108,20 +174,20 @@ class SprintsTest(unittest.TestCase):
         self, mock_get_estimate, mock_build_message
     ):
         mock_get_estimate.side_effect = [2, 8]
-        get_message_info('TEST Sprint', [
+        get_message_info('TEST Sprint', [], [
             {
                 'key': 'TEST-1',
-                'type': 'Story Task'
+                'type': 'task'
             },
             {
                 'key': 'TEST-2',
-                'type': 'Story Task'
+                'type': 'task'
             }
         ])
         mock_build_message.assert_called_once_with({
             'name': 'TEST Sprint',
             'burndown': 10
-        }, [])
+        }, [], [])
 
     @patch('slack.webhooks.build_message')
     @patch('jira.jira.get_estimate')
@@ -129,12 +195,10 @@ class SprintsTest(unittest.TestCase):
         self, mock_get_estimate, mock_build_message
     ):
         mock_get_estimate.side_effect = [None]
-        get_message_info('TEST Sprint', [
-            {
-                'key': 'TEST-1',
-                'type': 'Bug'
-            }
-        ])
+        get_message_info('TEST Sprint', [{
+            'key': 'TEST-1',
+            'type': 'bug'
+        }], [])
         mock_build_message.assert_called_once_with(
             {
                 'name': 'TEST Sprint',
@@ -142,6 +206,27 @@ class SprintsTest(unittest.TestCase):
             },
             [{
                 'key': 'TEST-1',
-                'type': 'Bug'
+                'type': 'bug'
+            }], []
+        )
+
+    @patch('slack.webhooks.build_message')
+    @patch('jira.jira.get_estimate')
+    def test_large_estimate_issues_are_passed_along(
+        self, mock_get_estimate, mock_build_message
+    ):
+        mock_get_estimate.side_effect = [17]
+        get_message_info('TEST Sprint', [], [{
+            'key': 'TEST-1',
+            'type': 'task'
+        }])
+        mock_build_message.assert_called_once_with(
+            {
+                'name': 'TEST Sprint',
+                'burndown': 17
+            }, [],
+            [{
+                'key': 'TEST-1',
+                'type': 'task'
             }]
         )

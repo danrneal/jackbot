@@ -2,11 +2,15 @@ from jira import jira
 from slack import slack
 
 
-def build_message(sprint_info, estimates_missing=None):
+def build_message(sprint_info, estimates_missing=None, large_estimates=None):
     message = build_burndown_block(sprint_info)
     if estimates_missing:
         message['blocks'].extend(
             build_estimates_missing_block(estimates_missing)
+        )
+    if large_estimates:
+        message['blocks'].extend(
+            build_large_estimates_block(large_estimates)
         )
     slack.send_message(message)
 
@@ -37,7 +41,7 @@ def build_burndown_block(sprint_info):
 
 
 def build_estimates_missing_block(estimates_missing):
-    issue_str = "*Issues*:"
+    issue_str = "*Issues:*"
     for issue in estimates_missing:
         url = f"{jira.SERVER}/browse/{issue['key']}"
         issue_str += f"\n<{url}|:jira_{issue['type']}: {issue['key']}>"
@@ -62,3 +66,28 @@ def build_estimates_missing_block(estimates_missing):
         }
     )
     return estimates_missing_block
+
+def build_large_estimates_block(large_estimates):
+    issue_str = "*Tasks:*"
+    for issue in large_estimates:
+        url = f"{jira.SERVER}/browse/{issue['key']}"
+        issue_str += f"\n<{url}|:jira_{issue['type']}: {issue['key']}>"
+    large_estimates_block = (
+        {
+            "type": "divider"
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "section",
+                "text": "These tasks are pretty big, consider splitting them"
+            },
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": issue_str
+                }
+            ]
+        }
+    )
+    return large_estimates_block
