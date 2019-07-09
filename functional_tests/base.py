@@ -33,7 +33,7 @@ class FunctionalTest(unittest.TestCase):
                 self.subtask_keys.append(subtask['key'])
         issue = self.setup_issue("Story", "test_3")
         self.issue_keys.append(issue['key'])
-        issue = self.setup_issue("Bug", "test_4")
+        issue = self.setup_issue("Task", "test_4")
         self.issue_keys.append(issue['key'])
         self.wait_for(lambda: self.assertEqual(
             requests.request("GET", self.live_server_url).text,
