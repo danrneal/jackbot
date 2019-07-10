@@ -49,6 +49,9 @@ def set_issue_estimates(issues):
         for subtask in issue['fields']['subtasks']:
             subtask_estimate = jira.get_estimate(subtask['key'])
             if subtask_estimate:
+                if not float(subtask_estimate).is_integer():
+                    subtask_estimate = int(subtask_estimate) + 1
+                    jira.update_estimate(subtask['key'], subtask_estimate)
                 estimate += subtask_estimate
         if estimate != jira.get_estimate(issue['key']):
             jira.update_estimate(issue['key'], estimate)

@@ -72,3 +72,14 @@ class EstimateUpdatedTest(FunctionalTest):
         ))
         self.assertEqual(jira.get_estimate(self.issue_keys[1]), 8)
         self.assertEqual(jira.get_estimate(self.issue_keys[2]), None)
+
+    def test_fractional_estimates_rounded_up(self):
+        # Abe adds a fractional estimate to an issue and adds it to a sprint,
+        # the estimate automatically rounds up
+        parent = jira.get_issue(self.issue_keys[0])
+        subtasks = parent['fields']['subtasks']
+        jira.update_estimate(subtasks[0]['key'], 7.2)
+        jira.add_issues_to_sprint(self.sprint_id, [self.issue_keys[0]])
+        self.wait_for(lambda: self.assertEqual(
+            jira.get_estimate(subtasks[0]['key']), 8
+        ))

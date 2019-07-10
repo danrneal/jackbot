@@ -113,51 +113,89 @@ class IssuesTest(unittest.TestCase):
 
     @patch('jira.issues.set_issue_estimates')
     @patch('jira.jira.get_issues_for_sprint')
-    def test_get_sprint_stories_only_gets_stories(
+    def test_get_sprint_stories_gets_stories(
         self, mock_get_issues_for_sprint, mock_set_issue_estimates
     ):
-        issue_1 = {
-            'fields': {
-                'issuetype': {
-                    'name': 'Bug'
-                }
-            }
-        }
-        issue_2 = {
+        story = {
             'fields': {
                 'issuetype': {
                     'name': 'Story'
                 }
             }
         }
-        mock_get_issues_for_sprint.return_value = [issue_1, issue_2]
+        mock_get_issues_for_sprint.return_value = [story]
         get_sprint_stories(1)
-        mock_set_issue_estimates.assert_called_once_with([issue_2])
+        mock_set_issue_estimates.assert_called_once_with([story])
+
+
+    @patch('jira.issues.set_issue_estimates')
+    @patch('jira.jira.get_issues_for_sprint')
+    def test_get_sprint_stories_ignores_non_stories(
+        self, mock_get_issues_for_sprint, mock_set_issue_estimates
+    ):
+        non_story = {
+            'fields': {
+                'issuetype': {
+                    'name': 'Bug'
+                }
+            }
+        }
+        mock_get_issues_for_sprint.return_value = [non_story]
+        get_sprint_stories(1)
+        mock_set_issue_estimates.assert_called_once_with([])
 
     @patch('jira.jira.update_estimate')
     @patch('jira.jira.get_estimate')
-    def test_set_issue_estimates_update_issue_estimates(
+    def test_set_issue_estimates_adds_up_issues(
         self, mock_get_estimate, mock_update_estimate
     ):
-        mock_get_estimate.side_effect = [2, 5, 7, None, 8, 11]
-        set_issue_estimates([
-            {
-                "key": "TEST-1",
-                "fields": {
-                    "subtasks": [{"key": "TEST-3"}, {"key": "TEST-4"}]
-                }
-            },
-            {
-                "key": "TEST-2",
-                'fields': {
-                    "subtasks": [{"key": "TEST-5"}, {"key": "TEST-6"}]
-                }
-            },
-        ])
-        mock_get_estimate.assert_any_call("TEST-3")
-        mock_get_estimate.assert_any_call("TEST-4")
-        mock_get_estimate.assert_any_call("TEST-1")
-        mock_get_estimate.assert_any_call("TEST-5")
-        mock_get_estimate.assert_any_call("TEST-6")
-        mock_get_estimate.assert_any_call("TEST-2")
+        mock_get_estimate.side_effect = [2, 5, None]
+        set_issue_estimates([{
+            "key": "TEST-1",
+            "fields": {
+                "subtasks": [{"key": "TEST-2"}, {"key": "TEST-3"}]
+            }
+        }])
+        mock_update_estimate.assert_called_once_with("TEST-1", 7)
+
+    @patch('jira.jira.update_estimate')
+    @patch('jira.jira.get_estimate')
+    def test_set_issue_estimates_ignores_missing_estimates(
+        self, mock_get_estimate, mock_update_estimate
+    ):
+        mock_get_estimate.side_effect = [8, None, 11]
+        set_issue_estimates([{
+            "key": "TEST-1",
+            "fields": {
+                "subtasks": [{"key": "TEST-2"}, {"key": "TEST-3"}]
+            }
+        }])
+        mock_update_estimate.assert_called_once_with("TEST-1", 8)
+
+    @patch('jira.jira.update_estimate')
+    @patch('jira.jira.get_estimate')
+    def test_set_issue_estimates_ignores_correct_estimates(
+        self, mock_get_estimate, mock_update_estimate
+    ):
+        mock_get_estimate.side_effect = [8, 3, 11]
+        set_issue_estimates([{
+            "key": "TEST-1",
+            "fields": {
+                "subtasks": [{"key": "TEST-2"}, {"key": "TEST-3"}]
+            }
+        }])
+        mock_update_estimate.assert_not_called()
+
+    @patch('jira.jira.update_estimate')
+    @patch('jira.jira.get_estimate')
+    def test_set_issue_estimates_rounds_up_fraction_estimates(
+        self, mock_get_estimate, mock_update_estimate
+    ):
+        mock_get_estimate.side_effect = [7.2, 8]
+        set_issue_estimates([{
+            "key": "TEST-1",
+            "fields": {
+                "subtasks": [{"key": "TEST-2"}]
+            }
+        }])
         mock_update_estimate.assert_called_once_with("TEST-2", 8)
