@@ -41,7 +41,7 @@ def get_latest_bot_message(channel_id, webhook_url):
     message_ts = None
     start = time.time()
     try:
-        while time.time() - start < 20:
+        while time.time() - start < 30:
             messages = get_messages(channel_id)
             bot_id = webhook_url.split('/')[-2]
             for message in messages:

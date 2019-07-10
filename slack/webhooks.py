@@ -46,11 +46,17 @@ def build_burndown_block(sprint_info):
     return burndown_block
 
 
-def build_no_subtasks_block(no_subtasks):
-    issue_str = "*Stories:*"
-    for issue in no_subtasks:
+def build_issue_str(field_header, issues):
+    issue_str = field_header
+    for issue in issues:
         url = f"{jira.SERVER}/browse/{issue['key']}"
         issue_str += f"\n<{url}|:jira_{issue['type']}: {issue['key']}>"
+        if issue.get('assignee'):
+            issue_str += f"    ({issue['assignee']})"
+    return issue_str
+
+
+def build_no_subtasks_block(no_subtasks):
     no_subtasks_block = (
         {
             "type": "divider"
@@ -66,7 +72,7 @@ def build_no_subtasks_block(no_subtasks):
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": issue_str
+                    "text": build_issue_str("*Stories:*", no_subtasks)
                 }
             ]
         }
@@ -75,10 +81,6 @@ def build_no_subtasks_block(no_subtasks):
 
 
 def build_estimates_missing_block(estimates_missing):
-    issue_str = "*Issues:*"
-    for issue in estimates_missing:
-        url = f"{jira.SERVER}/browse/{issue['key']}"
-        issue_str += f"\n<{url}|:jira_{issue['type']}: {issue['key']}>"
     estimates_missing_block = (
         {
             "type": "divider"
@@ -94,7 +96,7 @@ def build_estimates_missing_block(estimates_missing):
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": issue_str
+                    "text": build_issue_str("*Issues:*", estimates_missing)
                 }
             ]
         }
@@ -103,10 +105,6 @@ def build_estimates_missing_block(estimates_missing):
 
 
 def build_large_estimates_block(large_estimates):
-    issue_str = "*Tasks:*"
-    for issue in large_estimates:
-        url = f"{jira.SERVER}/browse/{issue['key']}"
-        issue_str += f"\n<{url}|:jira_{issue['type']}: {issue['key']}>"
     large_estimates_block = (
         {
             "type": "divider"
@@ -120,7 +118,7 @@ def build_large_estimates_block(large_estimates):
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": issue_str
+                    "text": build_issue_str("*Tasks:*", large_estimates)
                 }
             ]
         }

@@ -61,7 +61,7 @@ class SprintsTest(unittest.TestCase):
                     "statusCategory": {
                         "name": "Done"
                     }
-                }
+                },
             }
         }]
         get_sprint_issues_by_type(1, 'TEST Sprint')
@@ -83,7 +83,8 @@ class SprintsTest(unittest.TestCase):
                         "name": "Not Done"
                     }
                 },
-                'subtasks': [{'name': 'task1'}]
+                'subtasks': [{'name': 'task1'}],
+                'assignee': None
             }
         }]
         get_sprint_issues_by_type(1, 'TEST Sprint')
@@ -105,13 +106,44 @@ class SprintsTest(unittest.TestCase):
                         "name": "Not Done"
                     }
                 },
-                'subtasks': []
+                'subtasks': [],
+                'assignee': None
             }
         }]
         get_sprint_issues_by_type(1, 'TEST Sprint')
         mock_get_message_info.assert_called_once_with('TEST Sprint', [{
             'key': 'TEST-1',
-            'type': 'story'
+            'type': 'story',
+            'assignee': None
+        }], [], [])
+
+    @patch('jira.sprints.get_message_info')
+    @patch('jira.jira.get_issues_for_sprint')
+    def test_get_sprint_issuses_by_type_passes_assignee_when_exists(
+        self, mock_get_issues_for_sprint, mock_get_message_info
+    ):
+        mock_get_issues_for_sprint.return_value = [{
+            'key': 'TEST-1',
+            'fields': {
+                'issuetype': {
+                    'name': 'Story'
+                },
+                'status': {
+                    "statusCategory": {
+                        "name": "Not Done"
+                    }
+                },
+                'subtasks': [],
+                'assignee': {
+                    'displayName': 'test user'
+                }
+            }
+        }]
+        get_sprint_issues_by_type(1, 'TEST Sprint')
+        mock_get_message_info.assert_called_once_with('TEST Sprint', [{
+            'key': 'TEST-1',
+            'type': 'story',
+            'assignee': 'test user'
         }], [], [])
 
     @patch('jira.sprints.get_message_info')
@@ -130,7 +162,8 @@ class SprintsTest(unittest.TestCase):
                         "statusCategory": {
                             "name": "In Progress"
                         }
-                    }
+                    },
+                    'assignee': None
                 }
             },
             {
@@ -143,7 +176,8 @@ class SprintsTest(unittest.TestCase):
                         "statusCategory": {
                             "name": "In Progress"
                         }
-                    }
+                    },
+                    'assignee': None
                 }
             }
         ]
@@ -151,11 +185,13 @@ class SprintsTest(unittest.TestCase):
         mock_get_message_info.assert_called_once_with('TEST Sprint', [], [
             {
                 'key': 'TEST-1',
-                'type': 'bug'
+                'type': 'bug',
+                'assignee': None
             },
             {
                 'key': 'TEST-2',
-                'type': 'bug'
+                'type': 'bug',
+                'assignee': None
             },
         ], [])
 
@@ -175,7 +211,8 @@ class SprintsTest(unittest.TestCase):
                         "statusCategory": {
                             "name": "In Progress"
                         }
-                    }
+                    },
+                    'assignee': None
                 }
             },
             {
@@ -188,7 +225,8 @@ class SprintsTest(unittest.TestCase):
                         "statusCategory": {
                             "name": "In Progress"
                         }
-                    }
+                    },
+                    'assignee': None
                 }
             }
         ]
@@ -196,11 +234,13 @@ class SprintsTest(unittest.TestCase):
         mock_get_message_info.assert_called_once_with('TEST Sprint', [], [], [
             {
                 'key': 'TEST-1',
-                'type': 'task'
+                'type': 'task',
+                'assignee': None
             },
             {
                 'key': 'TEST-2',
-                'type': 'task'
+                'type': 'task',
+                'assignee': None
             },
         ])
 
@@ -213,11 +253,13 @@ class SprintsTest(unittest.TestCase):
         get_message_info('TEST Sprint', [], [], [
             {
                 'key': 'TEST-1',
-                'type': 'task'
+                'type': 'task',
+                'assignee': 'test user'
             },
             {
                 'key': 'TEST-2',
-                'type': 'task'
+                'type': 'task',
+                'assignee': 'test user'
             }
         ])
         mock_build_message.assert_called_once_with({
@@ -232,7 +274,8 @@ class SprintsTest(unittest.TestCase):
     ):
         missing_estimates = [{
             'key': 'TEST-1',
-            'type': 'bug'
+            'type': 'bug',
+            'assignee': 'test user'
         }]
         mock_get_estimate.return_value = None
         get_message_info('TEST Sprint', [], missing_estimates, [])
@@ -250,7 +293,8 @@ class SprintsTest(unittest.TestCase):
     ):
         large_estimates = [{
             'key': 'TEST-1',
-            'type': 'task'
+            'type': 'task',
+            'assignee': 'test user'
         }]
         mock_get_estimate.return_value = 17
         get_message_info('TEST Sprint', [], [], large_estimates)

@@ -35,20 +35,26 @@ def get_sprint_issues_by_type(sprint_id, sprint_name):
         for issue in sprint_issues:
             if issue['fields']['status']['statusCategory']['name'] != 'Done':
                 issuetype = issue['fields']['issuetype']['name']
+                assignee = None
+                if issue['fields']['assignee']:
+                    assignee = issue['fields']['assignee'].get('displayName')
                 if issuetype in ['Bug', 'Critical']:
                     bugs.append({
                         'key': issue['key'],
-                        'type': 'bug'
+                        'type': 'bug',
+                        'assignee': assignee
                     })
                 elif issuetype in ['Task', 'Story Task']:
                     tasks.append({
                         'key': issue['key'],
-                        'type': 'task'
+                        'type': 'task',
+                        'assignee': assignee
                     })
                 elif issuetype == 'Story' and not issue['fields']['subtasks']:
                     stories_no_subtasks.append({
                         'key': issue['key'],
-                        'type': 'story'
+                        'type': 'story',
+                        'assignee': assignee
                     })
         get_message_info(sprint_name, stories_no_subtasks, bugs, tasks)
 
