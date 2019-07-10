@@ -19,7 +19,8 @@ def sprint_started(data):
 
 def get_active_sprint_info():
     sprint = jira.get_active_sprint()
-    get_sprint_issues_by_type(sprint['id'], sprint['name'])
+    if sprint:
+        get_sprint_issues_by_type(sprint['id'], sprint['name'])
 
 
 def get_sprint_issues_by_type(sprint_id, sprint_name):

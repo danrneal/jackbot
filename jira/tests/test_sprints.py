@@ -32,7 +32,7 @@ class SprintsTest(unittest.TestCase):
     @patch('jira.sprints.get_sprint_issues_by_type')
     @patch('jira.jira.get_active_sprint')
     def test_get_active_sprint_id_and_name(
-            self, mock_get_active_sprint, mock_get_sprint_issues_by_type
+        self, mock_get_active_sprint, mock_get_sprint_issues_by_type
     ):
         mock_get_active_sprint.return_value = {
             'id': 1,
@@ -40,6 +40,15 @@ class SprintsTest(unittest.TestCase):
         }
         get_active_sprint_info()
         mock_get_sprint_issues_by_type.assert_called_once_with(1, 'TEST Sprint')
+
+    @patch('jira.sprints.get_sprint_issues_by_type')
+    @patch('jira.jira.get_active_sprint')
+    def test_get_active_sprint_info_returns_when_there_is_no_active_sprint(
+        self, mock_get_active_sprint, mock_get_sprint_issues_by_type
+    ):
+        mock_get_active_sprint.return_value = None
+        get_active_sprint_info()
+        mock_get_sprint_issues_by_type.assert_not_called()
 
     @patch('jira.sprints.get_message_info')
     @patch('jira.jira.get_issues_for_sprint')
@@ -104,7 +113,6 @@ class SprintsTest(unittest.TestCase):
             'key': 'TEST-1',
             'type': 'story'
         }], [], [])
-
 
     @patch('jira.sprints.get_message_info')
     @patch('jira.jira.get_issues_for_sprint')
@@ -222,20 +230,17 @@ class SprintsTest(unittest.TestCase):
     def test_missing_estimate_issues_are_passed_along(
         self, mock_get_estimate, mock_build_message
     ):
-        mock_get_estimate.side_effect = [None]
-        get_message_info('TEST Sprint', [], [{
+        missing_estimates = [{
             'key': 'TEST-1',
             'type': 'bug'
-        }], [])
+        }]
+        mock_get_estimate.return_value = None
+        get_message_info('TEST Sprint', [], missing_estimates, [])
         mock_build_message.assert_called_once_with(
             {
                 'name': 'TEST Sprint',
                 'burndown': 0
-            }, [],
-            [{
-                'key': 'TEST-1',
-                'type': 'bug'
-            }], []
+            }, [], missing_estimates, []
         )
 
     @patch('slack.webhooks.build_message')
@@ -243,18 +248,15 @@ class SprintsTest(unittest.TestCase):
     def test_large_estimate_issues_are_passed_along(
         self, mock_get_estimate, mock_build_message
     ):
-        mock_get_estimate.side_effect = [17]
-        get_message_info('TEST Sprint', [], [], [{
+        large_estimates = [{
             'key': 'TEST-1',
             'type': 'task'
-        }])
+        }]
+        mock_get_estimate.return_value = 17
+        get_message_info('TEST Sprint', [], [], large_estimates)
         mock_build_message.assert_called_once_with(
             {
                 'name': 'TEST Sprint',
                 'burndown': 17
-            }, [], [],
-            [{
-                'key': 'TEST-1',
-                'type': 'task'
-            }]
+            }, [], [], large_estimates
         )

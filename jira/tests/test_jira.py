@@ -21,6 +21,19 @@ class JiraTest(unittest.TestCase):
         self.assertEqual(sprint, {"state": "active"})
 
     @patch('requests.request')
+    def test_get_active_sprint_discards_inactive_sprints(self, mock_request):
+        mock_request.return_value = Mock()
+        mock_request.return_value.status_code = 200
+        mock_request.return_value.text = '{"values": [{"state": "closed"}]}'
+        sprint = jira.get_active_sprint()
+        mock_request.assert_called_once_with(
+            "GET", f"{jira.SERVER}/rest/agile/1.0/board/{jira.BOARD_ID}/sprint",
+            data=None,
+            headers=jira.headers
+        )
+        self.assertEqual(sprint, None)
+
+    @patch('requests.request')
     def test_get_issues_for_sprint(self, mock_request):
         mock_request.return_value = Mock()
         mock_request.return_value.status_code = 200

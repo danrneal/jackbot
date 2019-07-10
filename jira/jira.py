@@ -34,11 +34,12 @@ def get_active_sprint():
     url = f"/rest/agile/1.0/board/{BOARD_ID}/sprint"
     response = api_call("GET", url)
     sprints = json.loads(response)['values']
-    active_sprint = next(
+    active_sprint = next((
         sprint
         for sprint
         in sprints
-        if sprint['state'] == 'active'
+        if sprint['state'] == 'active'),
+        None
     )
     return active_sprint
 

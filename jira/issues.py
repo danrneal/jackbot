@@ -26,11 +26,26 @@ def get_issue_sprint(issue_key):
 
 def get_sprint_stories(sprint_id):
     sprint_issues = jira.get_issues_for_sprint(sprint_id)
+    for issue in sprint_issues:
+        estimate = jira.get_estimate(issue['key'])
+        if estimate and not float(estimate).is_integer():
+            jira.update_estimate(issue['key'], int(estimate) + 1)
     sprint_stories = [
         issue for issue in sprint_issues
         if issue['fields']['issuetype']['name'] == 'Story'
     ]
     set_issue_estimates(sprint_stories)
+
+
+def set_issue_estimates(issues):
+    for issue in issues:
+        estimate = 0
+        for subtask in issue['fields']['subtasks']:
+            subtask_estimate = jira.get_estimate(subtask['key'])
+            if subtask_estimate:
+                estimate += subtask_estimate
+        if estimate != jira.get_estimate(issue['key']):
+            jira.update_estimate(issue['key'], estimate)
 
 
 def set_backlog_issue_estimate(issue):
@@ -41,17 +56,3 @@ def set_backlog_issue_estimate(issue):
     estimate = jira.get_estimate(issue_key)
     if estimate is not None:
         jira.update_estimate(issue_key, None)
-
-
-def set_issue_estimates(issues):
-    for issue in issues:
-        estimate = 0
-        for subtask in issue['fields']['subtasks']:
-            subtask_estimate = jira.get_estimate(subtask['key'])
-            if subtask_estimate:
-                if not float(subtask_estimate).is_integer():
-                    subtask_estimate = int(subtask_estimate) + 1
-                    jira.update_estimate(subtask['key'], subtask_estimate)
-                estimate += subtask_estimate
-        if estimate != jira.get_estimate(issue['key']):
-            jira.update_estimate(issue['key'], estimate)

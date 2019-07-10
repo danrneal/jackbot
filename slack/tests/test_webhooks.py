@@ -18,14 +18,12 @@ class WebhooksTest(unittest.TestCase):
         mock_build_missing_estimates_block, mock_build_no_subtasks_block,
         mock_build_burndown_block, mock_send_message
     ):
-        build_message({
+        sprint_info = {
             'name': 'TEST Sprint',
             'burndown': 21
-        }, [], [], [])
-        mock_build_burndown_block.assert_called_once_with({
-            'name': 'TEST Sprint',
-            'burndown': 21
-        })
+        }
+        build_message(sprint_info, [], [], [])
+        mock_build_burndown_block.assert_called_once_with(sprint_info)
         mock_build_no_subtasks_block.assert_not_called()
         mock_build_missing_estimates_block.assert_not_called()
         mock_build_large_estimates_block.assert_not_called()
@@ -41,24 +39,17 @@ class WebhooksTest(unittest.TestCase):
         mock_build_missing_estimates_block, mock_build_no_subtasks_block,
         mock_build_burndown_block, mock_send_message
     ):
-        build_message(
-            {
-                'name': 'TEST Sprint',
-                'burndown': 21
-            },
-            [{
-                'key': 'TEST-1',
-                'type': 'story'
-            }], [], []
-        )
-        mock_build_burndown_block.assert_called_once_with({
+        sprint_info = {
             'name': 'TEST Sprint',
             'burndown': 21
-        })
-        mock_build_no_subtasks_block.assert_called_once_with([{
-                'key': 'TEST-1',
-                'type': 'story'
-        }])
+        }
+        no_subtasks = [{
+            'key': 'TEST-1',
+            'type': 'story'
+        }]
+        build_message(sprint_info, no_subtasks, [], [])
+        mock_build_burndown_block.assert_called_once_with(sprint_info)
+        mock_build_no_subtasks_block.assert_called_once_with(no_subtasks)
         mock_build_missing_estimates_block.assert_not_called()
         mock_build_large_estimates_block.assert_not_called()
         mock_send_message.assert_called_once()
@@ -68,30 +59,24 @@ class WebhooksTest(unittest.TestCase):
     @patch('slack.webhooks.build_no_subtasks_block')
     @patch('slack.webhooks.build_estimates_missing_block')
     @patch('slack.webhooks.build_large_estimates_block')
-    def test_build_message_builds_missing_estimate_block_when_appropriate(
+    def test_build_message_builds_estimates_missing_block_when_appropriate(
         self, mock_build_large_estimates_block,
         mock_build_missing_estimates_block, mock_build_no_subtasks_block,
         mock_build_burndown_block, mock_send_message
     ):
-        build_message(
-            {
-                'name': 'TEST Sprint',
-                'burndown': 21
-            }, [],
-            [{
-                'key': 'TEST-1',
-                'type': 'bug'
-            }], []
-        )
-        mock_build_burndown_block.assert_called_once_with({
+        sprint_info = {
             'name': 'TEST Sprint',
             'burndown': 21
-        })
+        }
+        estimates_missing = [{
+            'key': 'TEST-1',
+            'type': 'bug'
+        }]
+        build_message(sprint_info, [], estimates_missing, [])
+        mock_build_burndown_block.assert_called_once_with(sprint_info)
         mock_build_no_subtasks_block.assert_not_called()
-        mock_build_missing_estimates_block.assert_called_once_with([{
-                'key': 'TEST-1',
-                'type': 'bug'
-        }])
+        mock_build_missing_estimates_block.assert_called_once_with(
+            estimates_missing)
         mock_build_large_estimates_block.assert_not_called()
         mock_send_message.assert_called_once()
 
@@ -100,31 +85,25 @@ class WebhooksTest(unittest.TestCase):
     @patch('slack.webhooks.build_no_subtasks_block')
     @patch('slack.webhooks.build_estimates_missing_block')
     @patch('slack.webhooks.build_large_estimates_block')
-    def test_build_message_builds_large_estimate_block_when_appropriate(
+    def test_build_message_builds_large_estimates_block_when_appropriate(
         self, mock_build_large_estimates_block,
         mock_build_missing_estimates_block, mock_build_no_subtasks_block,
         mock_build_burndown_block, mock_send_message
     ):
-        build_message(
-            {
-                'name': 'TEST Sprint',
-                'burndown': 21
-            }, [], [],
-            [{
-                'key': 'TEST-1',
-                'type': 'task'
-            }]
-        )
-        mock_build_burndown_block.assert_called_once_with({
+        sprint_info = {
             'name': 'TEST Sprint',
             'burndown': 21
-        })
+        }
+        large_estimates = [{
+            'key': 'TEST-1',
+            'type': 'task'
+        }]
+        build_message(sprint_info, [], [], large_estimates)
+        mock_build_burndown_block.assert_called_once_with(sprint_info)
         mock_build_no_subtasks_block.assert_not_called()
         mock_build_missing_estimates_block.assert_not_called()
-        mock_build_large_estimates_block.assert_called_once_with([{
-                'key': 'TEST-1',
-                'type': 'task'
-        }])
+        mock_build_large_estimates_block.assert_called_once_with(
+            large_estimates)
         mock_send_message.assert_called_once()
 
     def test_burndown_block_is_built(self):

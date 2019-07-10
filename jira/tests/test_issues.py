@@ -42,7 +42,7 @@ class IssuesTest(unittest.TestCase):
     @patch('jira.jira.get_issue')
     def test_get_issue_sprint_gets_issue_sprint(
         self, mock_get_issue, mock_set_backlog_issue_estimate,
-            mock_get_sprint_stories
+        mock_get_sprint_stories
     ):
         mock_get_issue.return_value = {
             "key": "TEST-1",
@@ -61,7 +61,7 @@ class IssuesTest(unittest.TestCase):
     @patch('jira.jira.get_issue')
     def test_get_issue_sprint_deals_with_backlogged_items(
         self, mock_get_issue, mock_set_backlog_issue_estimate,
-            mock_get_sprint_stories
+        mock_get_sprint_stories
     ):
         issue = {
             "key": "TEST-1",
@@ -82,41 +82,37 @@ class IssuesTest(unittest.TestCase):
         mock_get_issue.side_effect = http_error
         get_issue_sprint("TEST-1")  # should not raise
 
+    @patch('jira.issues.set_issue_estimates')
+    @patch('jira.jira.get_issues_for_sprint')
     @patch('jira.jira.update_estimate')
     @patch('jira.jira.get_estimate')
-    def test_set_backlog_issue_estimate_gets_parent_of_subtask(
-        self, mock_get_estimate, mock_update_estimate
+    def test_get_sprint_stories_rounds_up_fractional_estimates(
+        self, mock_get_estimate, mock_update_estimate,
+        mock_get_issues_for_sprint, mock_set_issue_estimates
     ):
-        mock_get_estimate.return_value = 3
-        set_backlog_issue_estimate({
+        mock_get_estimate.return_value = 7.2
+        mock_get_issues_for_sprint.return_value = [{
+            'key': 'TEST-1',
             'fields': {
-                "parent": {
-                    'key': "TEST-1"
+                'issuetype': {
+                    'name': 'Bug'
                 }
             }
-        })
-        mock_get_estimate.assert_called_once_with("TEST-1")
-        mock_update_estimate.assert_called_once_with("TEST-1", None)
-
-    @patch('jira.jira.update_estimate')
-    @patch('jira.jira.get_estimate')
-    def test_set_backlog_issue_estimate_gets_own_estimate_if_not_subtask(
-        self, mock_get_estimate, mock_update_estimate
-    ):
-        mock_get_estimate.return_value = None
-        set_backlog_issue_estimate({
-            'key': 'TEST-1',
-            'fields': {}
-        })
-        mock_get_estimate.assert_called_once_with("TEST-1")
-        mock_update_estimate.assert_not_called()
+        }]
+        get_sprint_stories(1)
+        mock_update_estimate.assert_called_once_with('TEST-1', 8)
+        mock_set_issue_estimates.assert_called_once_with([])
 
     @patch('jira.issues.set_issue_estimates')
     @patch('jira.jira.get_issues_for_sprint')
+    @patch('jira.jira.update_estimate')
+    @patch('jira.jira.get_estimate')
     def test_get_sprint_stories_gets_stories(
-        self, mock_get_issues_for_sprint, mock_set_issue_estimates
+        self, mock_get_estimate, mock_update_estimate,
+        mock_get_issues_for_sprint, mock_set_issue_estimates
     ):
         story = {
+            'key': 'TEST-1',
             'fields': {
                 'issuetype': {
                     'name': 'Story'
@@ -124,16 +120,21 @@ class IssuesTest(unittest.TestCase):
             }
         }
         mock_get_issues_for_sprint.return_value = [story]
+        mock_get_estimate.return_value = None
         get_sprint_stories(1)
+        mock_update_estimate.assert_not_called()
         mock_set_issue_estimates.assert_called_once_with([story])
-
 
     @patch('jira.issues.set_issue_estimates')
     @patch('jira.jira.get_issues_for_sprint')
+    @patch('jira.jira.update_estimate')
+    @patch('jira.jira.get_estimate')
     def test_get_sprint_stories_ignores_non_stories(
-        self, mock_get_issues_for_sprint, mock_set_issue_estimates
+        self, mock_get_estimate, mock_update_estimate,
+        mock_get_issues_for_sprint, mock_set_issue_estimates
     ):
         non_story = {
+            'key': 'TEST-1',
             'fields': {
                 'issuetype': {
                     'name': 'Bug'
@@ -141,7 +142,9 @@ class IssuesTest(unittest.TestCase):
             }
         }
         mock_get_issues_for_sprint.return_value = [non_story]
+        mock_get_estimate.return_value = 8
         get_sprint_stories(1)
+        mock_update_estimate.assert_not_called()
         mock_set_issue_estimates.assert_called_once_with([])
 
     @patch('jira.jira.update_estimate')
@@ -188,14 +191,42 @@ class IssuesTest(unittest.TestCase):
 
     @patch('jira.jira.update_estimate')
     @patch('jira.jira.get_estimate')
-    def test_set_issue_estimates_rounds_up_fraction_estimates(
+    def test_set_backlog_issue_estimate_gets_parent_of_subtask(
         self, mock_get_estimate, mock_update_estimate
     ):
-        mock_get_estimate.side_effect = [7.2, 8]
-        set_issue_estimates([{
-            "key": "TEST-1",
-            "fields": {
-                "subtasks": [{"key": "TEST-2"}]
+        mock_get_estimate.return_value = 3
+        set_backlog_issue_estimate({
+            'fields': {
+                "parent": {
+                    'key': "TEST-1"
+                }
             }
-        }])
-        mock_update_estimate.assert_called_once_with("TEST-2", 8)
+        })
+        mock_get_estimate.assert_called_once_with("TEST-1")
+        mock_update_estimate.assert_called_once_with("TEST-1", None)
+
+    @patch('jira.jira.update_estimate')
+    @patch('jira.jira.get_estimate')
+    def test_set_backlog_issue_estimate_gets_own_estimate_if_not_subtask(
+        self, mock_get_estimate, mock_update_estimate
+    ):
+        mock_get_estimate.return_value = 8
+        set_backlog_issue_estimate({
+            'key': 'TEST-1',
+            'fields': {}
+        })
+        mock_get_estimate.assert_called_once_with("TEST-1")
+        mock_update_estimate.assert_called_once_with("TEST-1", None)
+
+    @patch('jira.jira.update_estimate')
+    @patch('jira.jira.get_estimate')
+    def test_set_backlog_issue_estimate_does_not_update_when_estimate_is_none(
+        self, mock_get_estimate, mock_update_estimate
+    ):
+        mock_get_estimate.return_value = None
+        set_backlog_issue_estimate({
+            'key': 'TEST-1',
+            'fields': {}
+        })
+        mock_get_estimate.assert_called_once_with("TEST-1")
+        mock_update_estimate.assert_not_called()
