@@ -73,8 +73,17 @@ def delete_sprint(sprint_id):
 
 def get_issues_for_sprint(sprint_id):
     url = f"/rest/agile/1.0/sprint/{sprint_id}/issue"
-    sprint_issues = api_call("GET", url)
-    return json.loads(sprint_issues)['issues']
+    response = api_call("GET", url)
+    max_results = json.loads(response)['maxResults']
+    start_at = json.loads(response)['startAt']
+    total = json.loads(response)['total']
+    sprint_issues = json.loads(response)['issues']
+    while start_at + max_results < total:
+        start_at += max_results
+        url = f"/rest/agile/1.0/sprint/{sprint_id}/issue?startAt={start_at}"
+        response = api_call("GET", url)
+        sprint_issues += json.loads(response)['issues']
+    return sprint_issues
 
 
 def add_issues_to_sprint(sprint_id, issue_keys):
