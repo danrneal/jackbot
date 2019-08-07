@@ -179,6 +179,17 @@ def delete_issue(issue_key, delete_subtasks=False):
     api_call("DELETE", url)
 
 
+def assign_issue(issue_key, account_id='me'):
+    if account_id == 'me':
+        response = requests.request('GET', SERVER, headers=headers)
+        account_id = response.headers['X-AACCOUNTID']
+    url = f"/rest/api/3/issue/{issue_key}/assignee"
+    payload = {
+        "accountId": account_id
+    }
+    api_call("PUT", url, data=payload)
+
+
 def get_transition_id(issue_key, transition_name):
     url = f"/rest/api/3/issue/{issue_key}/transitions"
     response = api_call("GET", url)

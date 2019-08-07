@@ -44,6 +44,7 @@ class FunctionalTest(unittest.TestCase):
     def tearDown(self):
         for issue_key in self.issue_keys + self.subtask_keys:
             jira.transition_issue(issue_key, "Archive", "Won't Do")
+            jira.assign_issue(issue_key, None)
         jira.delete_sprint(self.sprint_id)
         if not STAGING_SERVER:
             self.serveo.kill()
