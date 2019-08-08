@@ -11,8 +11,7 @@ if WEBHOOK_URL:
     live = True
 
 
-def sprint_started(data):
-    sprint = data.get('sprint')
+def sprint_event(sprint):
     if sprint['originBoardId'] == jira.BOARD_ID:
         get_sprint_issues_by_type(sprint['id'], sprint['name'])
 

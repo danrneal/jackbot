@@ -5,8 +5,7 @@ from jira import jira
 q = queue.Queue()
 
 
-def issue_event(data):
-    issue = data.get('issue')
+def issue_event(issue):
     if issue and issue['fields']['project']['key'] == jira.PROJ_KEY:
         get_issue_sprint(issue['key'])
 

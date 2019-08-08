@@ -13,25 +13,23 @@ from jira.issues import (
 @patch('jira.issues.get_issue_sprint')
 class IssueEventTest(unittest.TestCase):
 
-    data = {
-        "issue": {
-            "key": "TEST-1",
-            "fields": {
-                "project": {
-                    "key": None
-                }
+    issue = {
+        "key": "TEST-1",
+        "fields": {
+            "project": {
+                "key": None
             }
         }
     }
 
     def test_correct_project_is_acted_on(self, mock_get_issue_sprint):
-        self.data['issue']['fields']['project']['key'] = jira.PROJ_KEY
-        issue_event(self.data)
+        self.issue['fields']['project']['key'] = jira.PROJ_KEY
+        issue_event(self.issue)
         mock_get_issue_sprint.assert_called_once_with("TEST-1")
 
     def test_incorrect_project_is_ignored(self, mock_get_issue_sprint):
-        self.data['issue']['fields']['project']['key'] = 'NOT' + jira.PROJ_KEY
-        issue_event(self.data)
+        self.issue['fields']['project']['key'] = 'NOT' + jira.PROJ_KEY
+        issue_event(self.issue)
         mock_get_issue_sprint.assert_not_called()
 
 

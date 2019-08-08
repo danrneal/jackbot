@@ -9,7 +9,7 @@ import unittest
 from jira import jira
 
 STAGING_SERVER = os.environ.get('STAGING_SERVER')
-MAX_WAIT = 600
+MAX_WAIT = 60
 
 if not STAGING_SERVER:
     import jira.app as app

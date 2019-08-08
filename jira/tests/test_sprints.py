@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 from jira import jira
 from jira.sprints import (
-    sprint_started, get_sprint_issues_by_type, get_message_info,
+    sprint_event, get_sprint_issues_by_type, get_message_info,
     get_active_sprint_info
 )
 
@@ -10,21 +10,19 @@ from jira.sprints import (
 @patch('jira.sprints.get_sprint_issues_by_type')
 class SprintsTest(unittest.TestCase):
 
-    data = {
-        "sprint": {
-            "id": 1,
-            "name": 'TEST Sprint',
-        }
+    sprint = {
+        "id": 1,
+        "name": 'TEST Sprint',
     }
 
     def test_incorrect_board_is_ignored(self, mock_get_sprint_issues_by_type):
-        self.data['sprint']['originBoardId'] = jira.BOARD_ID + 1
-        sprint_started(self.data)
+        self.sprint['originBoardId'] = jira.BOARD_ID + 1
+        sprint_event(self.sprint)
         mock_get_sprint_issues_by_type.assert_not_called()
 
     def test_correct_board_is_acted_on(self, mock_get_sprint_issues_by_type):
-        self.data['sprint']['originBoardId'] = jira.BOARD_ID
-        sprint_started(self.data)
+        self.sprint['originBoardId'] = jira.BOARD_ID
+        sprint_event(self.sprint)
         mock_get_sprint_issues_by_type.assert_called_once_with(1, 'TEST Sprint')
 
 

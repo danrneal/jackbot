@@ -3,7 +3,7 @@ import json
 import queue
 import threading
 from jira.issues import issue_event
-from jira.sprints import sprint_started, scheduler
+from jira.sprints import sprint_event, scheduler
 
 app = flask.Flask(__name__)
 q = queue.Queue()
@@ -14,10 +14,12 @@ def handle_webhook_from_q():
         data = q.get()
         if data == 'shutdown':
             break
-        if str(data.get("webhookEvent")).startswith("jira:issue_"):
-            issue_event(data)
-        elif str(data.get("webhookEvent")) == "sprint_started":
-            sprint_started(data)
+        issue = data.get('issue')
+        if issue:
+            issue_event(issue)
+        sprint = data.get('sprint')
+        if sprint:
+            sprint_event(sprint)
 
 
 threading.Thread(target=handle_webhook_from_q, daemon=True).start()

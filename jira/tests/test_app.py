@@ -20,39 +20,39 @@ class WebhookTest(unittest.TestCase):
         self.assertEqual(200, response.status_code)
 
 
-class HandleWebhookFromQTEST(unittest.TestCase):
+class HandleWebhookFromQTest(unittest.TestCase):
 
     @patch('jira.app.q.get')
     def mock_handle_webhook_from_q(self, webhook, mock_q_get):
         mock_q_get.side_effect = [webhook, 'shutdown']
         handle_webhook_from_q()
 
-    @patch('jira.app.sprint_started')
+    @patch('jira.app.sprint_event')
     @patch('jira.app.issue_event')
     def test_issue_event_passed_to_issue_event_func(
-        self, mock_issue_event, mock_sprint_started
+        self, mock_issue_event, mock_sprint_event
     ):
-        webhook = {"webhookEvent": "jira:issue_any"}
+        webhook = {"issue": "Not None"}
         self.mock_handle_webhook_from_q(webhook)
-        mock_issue_event.assert_called_once_with(webhook)
-        mock_sprint_started.assert_not_called()
+        mock_issue_event.assert_called_once_with("Not None")
+        mock_sprint_event.assert_not_called()
 
-    @patch('jira.app.sprint_started')
+    @patch('jira.app.sprint_event')
     @patch('jira.app.issue_event')
     def test_sprint_started_event_passed_to_sprint_started_func(
-        self, mock_issue_event, mock_sprint_started
+        self, mock_issue_event, mock_sprint_event
     ):
-        webhook = {"webhookEvent": "sprint_started"}
+        webhook = {"sprint": "Not None"}
         self.mock_handle_webhook_from_q(webhook)
         mock_issue_event.assert_not_called()
-        mock_sprint_started.assert_called_once_with(webhook)
+        mock_sprint_event.assert_called_once_with("Not None")
 
-    @patch('jira.app.sprint_started')
+    @patch('jira.app.sprint_event')
     @patch('jira.app.issue_event')
     def test_other_events_get_discarded(
-        self, mock_issue_event, mock_sprint_started
+        self, mock_issue_event, mock_sprint_event
     ):
-        webhook = {"webhookEvent": "jira:other_event"}
+        webhook = {"anything_else": "something"}
         self.mock_handle_webhook_from_q(webhook)
         mock_issue_event.assert_not_called()
-        mock_sprint_started.assert_not_called()
+        mock_sprint_event.assert_not_called()
