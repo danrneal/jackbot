@@ -29,14 +29,15 @@ eg, on Ubuntu:
 Assume we have a user account at /home/username
 
 /home/username
-└── sites
-    ├── DOMAIN1
-    │    ├── .env
-    │    ├── env
-    │    ├── functional_tests
-    │    ├── jackbot
-    │    └── tests
-    └── DOMAIN2
-         ├── .env
-         ├── env
-         ├── etc
+
+    └── sites
+        ├── DOMAIN1
+        │    ├── .env
+        │    ├── env
+        │    ├── functional_tests
+        │    ├── jackbot
+        │    └── tests
+        └── DOMAIN2
+             ├── .env
+             ├── env
+             ├── etc
