@@ -19,9 +19,9 @@ def get_messages(channel_id):
     url += f"&channel={channel_id}"
     url += "&limit=10"
     response = requests.request("GET", url)
-    if not response.ok:
+    if not json.loads(response.text)['ok']:
         print(response.text)
-        response.raise_for_status()
+        raise requests.HTTPError(403)
     messages = json.loads(response.text)['messages']
     return messages
 
@@ -32,9 +32,9 @@ def delete_message(channel_id, message_ts):
     url += f"&channel={channel_id}"
     url += f"&ts={message_ts}"
     response = requests.request("POST", url)
-    if not response.ok:
+    if not json.loads(response.text)['ok']:
         print(response.text)
-        response.raise_for_status()
+        raise requests.HTTPError(403)
 
 
 def get_latest_bot_message(channel_id, webhook_url):
