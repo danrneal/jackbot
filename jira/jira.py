@@ -4,8 +4,8 @@ import json
 import os
 import requests
 
-SERVER = 'https://moblab.atlassian.net'
-EMAIL = 'dan.neal@moblab.com'
+SERVER = os.environ['JIRA_SERVER']
+EMAIL = os.environ['JIRA_EMAIL']
 PROJ_KEY = "EDU"
 BOARD_ID = 17
 
