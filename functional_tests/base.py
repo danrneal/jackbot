@@ -83,7 +83,7 @@ class FunctionalTest(unittest.TestCase):
         else:
             if parent_key:
                 estimate_field = jira.get_estimate_field(parent_key)
-                jira.create_issue(
+                issue = jira.create_issue(
                     issuetype, summary, parent_key, **{estimate_field: 0}
                 )
             else:
