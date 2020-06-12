@@ -1,7 +1,7 @@
 from fabric.contrib.files import exists
 from fabric.api import cd, env, local, run
 
-REPO_URL = 'git@gitlab.com:dan.r.neal/jackbot.git'
+REPO_URL = 'git@github.com:danrneal/jackbot.git'
 
 
 def deploy():
