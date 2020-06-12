@@ -1,7 +1,6 @@
-Provisioning a new site
-=======================
+# Provisioning a new site
 
-## Required packages:
+## Required packages
 
 * nginx
 * Python 3
@@ -24,12 +23,11 @@ eg, on Ubuntu:
 * replace DOMAIN with, e.g., staging.my-domain.com
 * replace USER with, e.g., user
 
-## Folder structure:
+## Folder structure
 
 Assume we have a user account at /home/username
 
-/home/username
-
+    /home/username
     └── sites
         ├── DOMAIN1
         │    ├── .env
