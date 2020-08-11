@@ -1,8 +1,5 @@
-env
-venv
-.idea
-__pycache__
-functional_tests/datadumps
+__pycache__/
+*.pyc
 .env
-.vscode
-.history
+env/
+functional_tests/datadumps/
